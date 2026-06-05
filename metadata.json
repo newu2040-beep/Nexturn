@@ -1,0 +1,6 @@
+{
+  "name": "Nexturn",
+  "description": "Create and manage CVs, Cover Letters, Emails, Invoices, and Project Proposals on your device. Auto-suggest format, offline-only data containment and sharing options",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
