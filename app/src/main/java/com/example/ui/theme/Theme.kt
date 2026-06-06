@@ -208,6 +208,123 @@ private val SageDarkScheme = darkColorScheme(
     outline = Color(0xFF226E54)
 )
 
+// Theme 5: Sunset Amber
+private val SunsetLightScheme = lightColorScheme(
+    primary = SunsetLightPrimary,
+    onPrimary = Color.White,
+    primaryContainer = SunsetLightVariant,
+    onPrimaryContainer = SunsetLightPrimary,
+    secondary = SunsetLightSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = SunsetLightVariant,
+    onSecondaryContainer = SunsetLightSecondary,
+    tertiary = SunsetLightTertiary,
+    background = SunsetLightBg,
+    onBackground = Color(0xFF3B150A),
+    surface = SunsetLightSurface,
+    onSurface = Color(0xFF3B150A),
+    surfaceVariant = SunsetLightVariant,
+    onSurfaceVariant = SunsetLightPrimary,
+    outline = Color(0xFFFFCCBA)
+)
+
+private val SunsetDarkScheme = darkColorScheme(
+    primary = SunsetDarkPrimary,
+    onPrimary = Color(0xFF180C07),
+    primaryContainer = SunsetDarkVariant,
+    onPrimaryContainer = SunsetDarkPrimary,
+    secondary = SunsetDarkSecondary,
+    onSecondary = Color(0xFF4C1014),
+    secondaryContainer = SunsetDarkVariant,
+    onSecondaryContainer = SunsetDarkSecondary,
+    tertiary = SunsetDarkTertiary,
+    background = SunsetDarkBg,
+    onBackground = Color(0xFFFFF1EB),
+    surface = SunsetDarkSurface,
+    onSurface = Color(0xFFFFF1EB),
+    surfaceVariant = SunsetDarkVariant,
+    onSurfaceVariant = SunsetDarkPrimary,
+    outline = Color(0xFF6B2D18)
+)
+
+// Theme 6: Midnight Cosmic
+private val CosmicLightScheme = lightColorScheme(
+    primary = CosmicLightPrimary,
+    onPrimary = Color.White,
+    primaryContainer = CosmicLightVariant,
+    onPrimaryContainer = CosmicLightPrimary,
+    secondary = CosmicLightSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = CosmicLightVariant,
+    onSecondaryContainer = CosmicLightSecondary,
+    tertiary = CosmicLightTertiary,
+    background = CosmicLightBg,
+    onBackground = Color(0xFF0F0B3B),
+    surface = CosmicLightSurface,
+    onSurface = Color(0xFF0F0B3B),
+    surfaceVariant = CosmicLightVariant,
+    onSurfaceVariant = CosmicLightPrimary,
+    outline = Color(0xFFC7D2FE)
+)
+
+private val CosmicDarkScheme = darkColorScheme(
+    primary = CosmicDarkPrimary,
+    onPrimary = Color(0xFF0A0915),
+    primaryContainer = CosmicDarkVariant,
+    onPrimaryContainer = CosmicDarkPrimary,
+    secondary = CosmicDarkSecondary,
+    onSecondary = Color(0xFF2E1065),
+    secondaryContainer = CosmicDarkVariant,
+    onSecondaryContainer = CosmicDarkSecondary,
+    tertiary = CosmicDarkTertiary,
+    background = CosmicDarkBg,
+    onBackground = Color(0xFFEEF2FF),
+    surface = CosmicDarkSurface,
+    onSurface = Color(0xFFEEF2FF),
+    surfaceVariant = CosmicDarkVariant,
+    onSurfaceVariant = CosmicDarkPrimary,
+    outline = Color(0xFF2E2C5B)
+)
+
+// Theme 7: Cyber Neon
+private val CyberLightScheme = lightColorScheme(
+    primary = CyberLightPrimary,
+    onPrimary = Color.White,
+    primaryContainer = CyberLightVariant,
+    onPrimaryContainer = CyberLightPrimary,
+    secondary = CyberLightSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = CyberLightVariant,
+    onSecondaryContainer = CyberLightSecondary,
+    tertiary = CyberLightTertiary,
+    background = CyberLightBg,
+    onBackground = Color(0xFF041C16),
+    surface = CyberLightSurface,
+    onSurface = Color(0xFF041C16),
+    surfaceVariant = CyberLightVariant,
+    onSurfaceVariant = CyberLightPrimary,
+    outline = Color(0xFF99F6E4)
+)
+
+private val CyberDarkScheme = darkColorScheme(
+    primary = CyberDarkPrimary,
+    onPrimary = Color(0xFF040D1A),
+    primaryContainer = CyberDarkVariant,
+    onPrimaryContainer = CyberDarkPrimary,
+    secondary = CyberDarkSecondary,
+    onSecondary = Color(0xFF064E3B),
+    secondaryContainer = CyberDarkVariant,
+    onSecondaryContainer = CyberDarkSecondary,
+    tertiary = CyberDarkTertiary,
+    background = CyberDarkBg,
+    onBackground = Color(0xFFE0F2FE),
+    surface = CyberDarkSurface,
+    onSurface = Color(0xFFE0F2FE),
+    surfaceVariant = CyberDarkVariant,
+    onSurfaceVariant = CyberDarkPrimary,
+    outline = Color(0xFF1E456B)
+)
+
 @Composable
 fun MyApplicationTheme(
     selectedThemeIndex: Int = 0,
@@ -221,6 +338,9 @@ fun MyApplicationTheme(
         2 -> if (darkTheme) CherryDarkScheme else CherryLightScheme
         3 -> if (darkTheme) OceanDarkScheme else OceanLightScheme
         4 -> if (darkTheme) SageDarkScheme else SageLightScheme
+        5 -> if (darkTheme) SunsetDarkScheme else SunsetLightScheme
+        6 -> if (darkTheme) CosmicDarkScheme else CosmicLightScheme
+        7 -> if (darkTheme) CyberDarkScheme else CyberLightScheme
         else -> if (darkTheme) LavenderDarkScheme else LavenderLightScheme
     }
 

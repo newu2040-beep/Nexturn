@@ -9,6 +9,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.graphics.asImageBitmap
+import coil.compose.AsyncImage
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -891,7 +894,10 @@ fun UnifiedCustomizerHubCard(
         Triple("Peach Cream", "🍑", if (isDark) PeachDarkPrimary else PeachLightPrimary),
         Triple("Cherry Blossom", "🍒", if (isDark) CherryDarkPrimary else CherryLightPrimary),
         Triple("Ocean Breeze", "🌊", if (isDark) OceanDarkPrimary else OceanLightPrimary),
-        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary)
+        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary),
+        Triple("Sunset Amber", "🌇", if (isDark) SunsetDarkPrimary else SunsetLightPrimary),
+        Triple("Midnight Cosmic", "🌌", if (isDark) CosmicDarkPrimary else CosmicLightPrimary),
+        Triple("Cyber Neon", "👾", if (isDark) CyberDarkPrimary else CyberLightPrimary)
     )
 
     Card(
@@ -1183,32 +1189,35 @@ fun UnifiedCustomizerHubCard(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             themes.forEachIndexed { index, (name, emoji, color) ->
                                 val isSelected = selectedThemeIndex == index
-                                val containerColor = if (isSelected) color.copy(alpha = 0.25f) else Color.Transparent
-                                val border = if (isSelected) BorderStroke(1.5.dp, color) else BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                                val containerColor = if (isSelected) color.copy(alpha = 0.22f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                                val border = if (isSelected) BorderStroke(2.dp, color) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
 
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 2.dp)
+                                        .width(100.dp)
                                         .background(containerColor, RoundedCornerShape(12.dp))
                                         .border(border, RoundedCornerShape(12.dp))
                                         .clickable { viewModel.selectTheme(index) }
-                                        .padding(vertical = 8.dp),
+                                        .padding(vertical = 10.dp, horizontal = 4.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(emoji, fontSize = 16.sp)
-                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(emoji, fontSize = 20.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = name.split(" ")[0],
+                                            text = name,
                                             style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
                                 }
@@ -1232,7 +1241,10 @@ fun ThemeDropdownSelector(viewModel: DocumentViewModel) {
         Triple("Peach Cream", "🍑", if (isDark) PeachDarkPrimary else PeachLightPrimary),
         Triple("Cherry Blossom", "🍒", if (isDark) CherryDarkPrimary else CherryLightPrimary),
         Triple("Ocean Breeze", "🌊", if (isDark) OceanDarkPrimary else OceanLightPrimary),
-        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary)
+        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary),
+        Triple("Sunset Amber", "🌇", if (isDark) SunsetDarkPrimary else SunsetLightPrimary),
+        Triple("Midnight Cosmic", "🌌", if (isDark) CosmicDarkPrimary else CosmicLightPrimary),
+        Triple("Cyber Neon", "👾", if (isDark) CyberDarkPrimary else CyberLightPrimary)
     )
 
     Box {
@@ -1287,6 +1299,7 @@ fun DashboardDrawerContent(
     val useSignatureState by viewModel.useSignature.collectAsStateWithLifecycle()
     val signatureTextState by viewModel.signatureText.collectAsStateWithLifecycle()
     val signatureStyleState by viewModel.signatureStyle.collectAsStateWithLifecycle()
+    val signatureBitmapState by viewModel.signatureBitmapBase64.collectAsStateWithLifecycle()
 
     val useWatermarkState by viewModel.useWatermark.collectAsStateWithLifecycle()
     val watermarkTextState by viewModel.watermarkText.collectAsStateWithLifecycle()
@@ -1345,7 +1358,10 @@ fun DashboardDrawerContent(
         Triple("Peach Cream", "🍑", if (isDark) PeachDarkPrimary else PeachLightPrimary),
         Triple("Cherry Blossom", "🍒", if (isDark) CherryDarkPrimary else CherryLightPrimary),
         Triple("Ocean Breeze", "🌊", if (isDark) OceanDarkPrimary else OceanLightPrimary),
-        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary)
+        Triple("Sage Garden", "🌿", if (isDark) SageDarkPrimary else SageLightPrimary),
+        Triple("Sunset Amber", "🌇", if (isDark) SunsetDarkPrimary else SunsetLightPrimary),
+        Triple("Midnight Cosmic", "🌌", if (isDark) CosmicDarkPrimary else CosmicLightPrimary),
+        Triple("Cyber Neon", "👾", if (isDark) CyberDarkPrimary else CyberLightPrimary)
     )
 
     val paperColors = listOf(
@@ -1980,6 +1996,36 @@ fun DashboardDrawerContent(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Draw Digital Signature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
+                    if (signatureBitmapState.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp)
+                                .background(Color.White, RoundedCornerShape(8.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val imageBytes = android.util.Base64.decode(signatureBitmapState, android.util.Base64.DEFAULT)
+                            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.count())
+                            if (bitmap != null) {
+                                androidx.compose.foundation.Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Signature Preview",
+                                    modifier = Modifier.fillMaxHeight()
+                                )
+                            }
+                        }
+                        TextButton(
+                            onClick = { viewModel.setSignatureBitmapBase64("") },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("Clear Drawn Signature", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                     Button(
                         onClick = {
                             viewModel.setSignatureText("Verified Seal " + SimpleDateFormat("yyMMdd-HH", Locale.getDefault()).format(Date()))
@@ -2061,8 +2107,30 @@ fun DashboardDrawerContent(
                         Text("Import Custom Watermark", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
                     }
                     if (watermarkImageUriState.isNotEmpty()) {
-                        TextButton(onClick = { viewModel.setWatermarkImageUri("") }) {
-                            Text("Clear Custom Image Watermark", style = MaterialTheme.typography.labelSmall, color = Color.Red)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(65.dp)
+                                .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = watermarkImageUriState,
+                                contentDescription = "Watermark Preview",
+                                modifier = Modifier.fillMaxHeight(),
+                                alpha = 0.35f
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.setWatermarkImageUri("") },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("Clear Custom Image Watermark", style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
