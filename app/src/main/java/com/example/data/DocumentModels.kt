@@ -768,3 +768,106 @@ data class BusinessLetterData(
     }
 }
 
+data class CustomDocumentData(
+    val templateId: Int = 11, // 11 to 22 are Built-In templates, 23 is Fully Custom
+    val title: String = "",
+    val fields: Map<String, String> = emptyMap(),
+    val customFieldLabels: List<String> = emptyList(),
+    val imageX: Float = 20f,
+    val imageY: Float = 20f,
+    val imageUri: String? = null
+) {
+    fun toJson(): String {
+        val json = JSONObject()
+        json.put("templateId", templateId)
+        json.put("title", title)
+        json.put("imageX", imageX.toDouble())
+        json.put("imageY", imageY.toDouble())
+        json.put("imageUri", imageUri ?: "")
+        
+        val fieldsObj = JSONObject()
+        fields.forEach { (k, v) -> fieldsObj.put(k, v) }
+        json.put("fields", fieldsObj)
+
+        val labelsArr = JSONArray()
+        customFieldLabels.forEach { labelsArr.put(it) }
+        json.put("customFieldLabels", labelsArr)
+        
+        return json.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): CustomDocumentData {
+            if (jsonStr.isEmpty()) return CustomDocumentData()
+            val json = JSONObject(jsonStr)
+            val fieldsMap = mutableMapOf<String, String>()
+            val fieldsObj = json.optJSONObject("fields")
+            if (fieldsObj != null) {
+                val keys = fieldsObj.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    fieldsMap[k] = fieldsObj.optString(k, "")
+                }
+            }
+            val labelsList = mutableListOf<String>()
+            val labelsArr = json.optJSONArray("customFieldLabels")
+            if (labelsArr != null) {
+                for (i in 0 until labelsArr.length()) {
+                    labelsList.add(labelsArr.optString(i, ""))
+                }
+            }
+            return CustomDocumentData(
+                templateId = json.optInt("templateId", 11),
+                title = json.optString("title", ""),
+                imageX = json.optDouble("imageX", 20.0).toFloat(),
+                imageY = json.optDouble("imageY", 20.0).toFloat(),
+                imageUri = json.optString("imageUri", "").ifBlank { null },
+                fields = fieldsMap,
+                customFieldLabels = labelsList
+            )
+        }
+    }
+}
+
+data class UserProfileData(
+    val name: String = "",
+    val companyName: String = "",
+    val address: String = "",
+    val logoUri: String? = null,
+    val taxId: String = "",
+    val signatureImageUri: String? = null,
+    val phone: String = "",
+    val email: String = ""
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("name", name)
+            put("companyName", companyName)
+            put("address", address)
+            put("logoUri", logoUri ?: "")
+            put("taxId", taxId)
+            put("signatureImageUri", signatureImageUri ?: "")
+            put("phone", phone)
+            put("email", email)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): UserProfileData {
+            if (jsonStr.isEmpty()) return UserProfileData()
+            val json = JSONObject(jsonStr)
+            return UserProfileData(
+                name = json.optString("name", ""),
+                companyName = json.optString("companyName", ""),
+                address = json.optString("address", ""),
+                logoUri = json.optString("logoUri", "").ifBlank { null },
+                taxId = json.optString("taxId", ""),
+                signatureImageUri = json.optString("signatureImageUri", "").ifBlank { null },
+                phone = json.optString("phone", ""),
+                email = json.optString("email", "")
+            )
+        }
+    }
+}
+
+

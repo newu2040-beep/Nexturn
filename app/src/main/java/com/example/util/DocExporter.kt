@@ -1435,6 +1435,47 @@ ${data.signatureLinkedIn.ifBlank { "[LinkedIn]" }}
         }, null)
     }
 
+    fun generateDynamicTxt(tabType: Int, json: String): String {
+        return "Exported Document (Type $tabType)\n\n" + json // simple dump
+    }
+
+    fun generateDynamicPdf(context: Context, tabType: Int, json: String): File {
+        val pdfDocument = android.graphics.pdf.PdfDocument()
+        val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+        val paint = Paint().apply {
+            color = Color.BLACK
+            textSize = 14f
+        }
+        var yPos = 50f
+        
+        val outputLines = mutableListOf<String>()
+        try {
+            val js = org.json.JSONObject(json)
+            val keys = js.keys()
+            while (keys.hasNext()) {
+                val k = keys.next()
+                val v = js.optString(k, "")
+                if (v.isNotBlank() && !v.startsWith("[")) {
+                     outputLines.add("$k: $v")
+                }
+            }
+        } catch (_: Exception) {}
+
+        outputLines.forEach { line ->
+            canvas.drawText(line, 50f, yPos, paint)
+            yPos += 20f
+        }
+        if (outputLines.isEmpty()) canvas.drawText("Empty or custom structure", 50f, yPos, paint)
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "Document_${System.currentTimeMillis()}.pdf")
+        FileOutputStream(file).use { pdfDocument.writeTo(it) }
+        pdfDocument.close()
+        return file
+    }
+
     // Helper: Saves text to file for sharing
     fun writeTextToFile(context: Context, text: String, filename: String): File {
         val file = File(context.cacheDir, filename)
@@ -1442,5 +1483,39 @@ ${data.signatureLinkedIn.ifBlank { "[LinkedIn]" }}
             out.write(text.toByteArray())
         }
         return file
+    }
+    
+    // Batch Export Helper
+    fun batchExport(context: Context, docs: List<com.example.data.SavedDocument>, format: String) {
+        val files = mutableListOf<File>()
+        for (doc in docs) {
+            try {
+                if (format == "TXT") {
+                    files.add(writeTextToFile(context, "Type: ${doc.type}\nContent: ${doc.contentJson}", "${doc.name}.txt"))
+                } else {
+                    files.add(generateDynamicPdf(context, 23, doc.contentJson)) // Quick fallback
+                }
+            } catch (_: Exception) {}
+        }
+        if (files.isNotEmpty()) {
+            shareMultipleFiles(context, files, if (format == "TXT") "text/plain" else "application/pdf")
+        }
+    }
+
+    private fun shareMultipleFiles(context: Context, files: List<File>, mimeType: String) {
+        val uris = files.map { file ->
+            androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        }.let { java.util.ArrayList(it) }
+
+        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND_MULTIPLE).apply {
+            type = mimeType
+            putParcelableArrayListExtra(android.content.Intent.EXTRA_STREAM, uris)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Batch Export"))
     }
 }

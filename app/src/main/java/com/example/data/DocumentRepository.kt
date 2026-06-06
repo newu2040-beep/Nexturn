@@ -20,4 +20,7 @@ class DocumentRepository(private val documentDao: DocumentDao) {
 
     suspend fun deleteByTypeAndName(type: String, name: String) = 
         documentDao.deleteByTypeAndName(type, name)
+
+    fun getAllDocuments(): Flow<List<SavedDocument>> =
+        documentDao.getAllDocuments()
 }

@@ -1,5 +1,14 @@
 package com.example.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import java.util.Locale
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -84,6 +93,19 @@ fun HighlightField(
 ) {
     val isMissing = highlightIfEmpty && value.trim().isEmpty()
     val isFocused = focusedField.value == fieldName
+    val context = LocalContext.current
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (spokenText != null) {
+                onValueChange(spokenText)
+                focusedField.value = fieldName
+            }
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         OutlinedTextField(
@@ -107,7 +129,28 @@ fun HighlightField(
             minLines = if (isMultiline) 3 else 1,
             leadingIcon = if (leadingIcon != null) {
                 { Icon(leadingIcon, contentDescription = null, tint = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
-            } else null
+            } else null,
+            trailingIcon = {
+                IconButton(onClick = {
+                    focusedField.value = fieldName
+                    try {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speech input for: $label")
+                        }
+                        speechLauncher.launch(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Voice input not supported or enabled.", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Speak to dictate",
+                        tint = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
         )
         if (isFocused) {
             Text(

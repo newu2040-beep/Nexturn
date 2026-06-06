@@ -25,6 +25,9 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     val useSignature = MutableStateFlow(prefs.getBoolean("use_signature", false))
     val signatureText = MutableStateFlow(prefs.getString("signature_text", "") ?: "")
     val signatureStyle = MutableStateFlow(prefs.getString("signature_style", "Cursive") ?: "Cursive")
+    val signaturePaths = MutableStateFlow(prefs.getString("signature_paths_json", "") ?: "")
+    val signatureBitmapBase64 = MutableStateFlow(prefs.getString("signature_bitmap_base64", "") ?: "")
+    val watermarkImageUri = MutableStateFlow(prefs.getString("watermark_image_uri", "") ?: "")
 
     val useWatermark = MutableStateFlow(prefs.getBoolean("use_watermark", false))
     val watermarkText = MutableStateFlow(prefs.getString("watermark_text", "CONFIDENTIAL") ?: "CONFIDENTIAL")
@@ -62,6 +65,21 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().putString("signature_style", value).apply()
     }
 
+    fun setSignatureBitmapBase64(value: String) {
+        signatureBitmapBase64.value = value
+        prefs.edit().putString("signature_bitmap_base64", value).apply()
+    }
+
+    fun setWatermarkImageUri(value: String) {
+        watermarkImageUri.value = value
+        prefs.edit().putString("watermark_image_uri", value).apply()
+    }
+
+    fun setSignaturePaths(value: String) {
+        signaturePaths.value = value
+        prefs.edit().putString("signature_paths_json", value).apply()
+    }
+
     fun setUseWatermark(value: Boolean) {
         useWatermark.value = value
         prefs.edit().putBoolean("use_watermark", value).apply()
@@ -77,6 +95,14 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().putInt("universal_size_index", value).apply()
     }
 
+    // User Profile persistent auto-save state
+    val userProfile = MutableStateFlow(UserProfileData.fromJson(prefs.getString("user_profile_json", "") ?: ""))
+
+    fun saveUserProfile(profile: UserProfileData) {
+        userProfile.value = profile
+        prefs.edit().putString("user_profile_json", profile.toJson()).apply()
+    }
+
     // Active edit state for each document
     val activeCv = MutableStateFlow(CvData())
     val activeCoverLetter = MutableStateFlow(CoverLetterData())
@@ -90,6 +116,9 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     val activeMeetingMinutes = MutableStateFlow(MeetingMinutesData())
     val activeBusinessLetter = MutableStateFlow(BusinessLetterData())
 
+    // Map of active custom templates (11 to 23)
+    val activeCustomDocs = MutableStateFlow<Map<Int, CustomDocumentData>>(emptyMap())
+
     // Currently loaded template name/id
     val curCvTemplateName = MutableStateFlow<String?>(null)
     val curCoverLetterTemplateName = MutableStateFlow<String?>(null)
@@ -102,6 +131,9 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     val curCertificateTemplateName = MutableStateFlow<String?>(null)
     val curMeetingMinutesTemplateName = MutableStateFlow<String?>(null)
     val curBusinessLetterTemplateName = MutableStateFlow<String?>(null)
+
+    // Map of currently loaded custom template names (11 to 23)
+    val curCustomTemplateNames = MutableStateFlow<Map<Int, String?>>(emptyMap())
 
     // Lists of saved templates from database
     val savedCvTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("CV")
@@ -135,6 +167,14 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val savedBusinessLetterTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("BUSINESS_LETTER")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // 11: Reference Letter, 12: PO, 13: Quote, 14: NDA, 15: Timesheet, 16: Expense, 17: Press Release
+    // 18: Memo, 19: Thank You, 20: Acceptance, 21: Termination, 22: Performance, 23: Custom
+    val activeDynamicJsons = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val curDynamicTemplateNames = MutableStateFlow<Map<Int, String?>>(emptyMap())
+
+    val allSavedDocuments: StateFlow<List<SavedDocument>> = repository.getAllDocuments()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
@@ -178,6 +218,20 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "BUSINESS_LETTER")?.let { doc ->
             activeBusinessLetter.value = BusinessLetterData.fromJson(doc.contentJson)
         }
+        for (index in 11..23) {
+            repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "DYNAMIC_$index")?.let { doc ->
+                activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
+                    put(index, doc.contentJson)
+                }
+            }
+        }
+        for (index in 11..23) {
+            repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "CUSTOM_$index")?.let { doc ->
+                activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
+                    put(index, CustomDocumentData.fromJson(doc.contentJson))
+                }
+            }
+        }
     }
 
     // Debounce state saving
@@ -195,6 +249,22 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                 )
             )
         }
+    }
+
+    fun updateDynamicJson(index: Int, rawJson: String) {
+        activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
+            put(index, rawJson)
+        }
+        triggerAutosave("DYNAMIC_$index", rawJson)
+    }
+
+    fun updateCustomDoc(index: Int, updater: (CustomDocumentData) -> CustomDocumentData) {
+        val current = activeCustomDocs.value[index] ?: CustomDocumentData(templateId = index)
+        val next = updater(current)
+        activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
+            put(index, next)
+        }
+        triggerAutosave("CUSTOM_$index", next.toJson())
     }
 
     // General state updater methods
@@ -323,6 +393,27 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                     curBusinessLetterTemplateName.value = null
                     repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "BUSINESS_LETTER", contentJson = BusinessLetterData().toJson()))
                 }
+                else -> {
+                    if (type.startsWith("DYNAMIC_")) {
+                        val idx = type.substringAfter("DYNAMIC_").toIntOrNull() ?: 11
+                        activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
+                            put(idx, "")
+                        }
+                        curDynamicTemplateNames.value = curDynamicTemplateNames.value.toMutableMap().apply {
+                            put(idx, null)
+                        }
+                        repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "DYNAMIC_$idx", contentJson = ""))
+                    } else if (type.startsWith("CUSTOM_")) {
+                        val idx = type.substringAfter("CUSTOM_").toIntOrNull() ?: 11
+                        activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
+                            put(idx, CustomDocumentData(templateId = idx))
+                        }
+                        curCustomTemplateNames.value = curCustomTemplateNames.value.toMutableMap().apply {
+                            put(idx, null)
+                        }
+                        repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "CUSTOM_$idx", contentJson = CustomDocumentData(templateId = idx).toJson()))
+                    }
+                }
             }
         }
     }
@@ -375,7 +466,21 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                     curBusinessLetterTemplateName.value = templateName
                     activeBusinessLetter.value.toJson()
                 }
-                else -> ""
+                else -> {
+                    if (type.startsWith("DYNAMIC_")) {
+                        val idx = type.substringAfter("DYNAMIC_").toIntOrNull() ?: 11
+                        curDynamicTemplateNames.value = curDynamicTemplateNames.value.toMutableMap().apply {
+                            put(idx, templateName)
+                        }
+                        activeDynamicJsons.value[idx] ?: ""
+                    } else if (type.startsWith("CUSTOM_")) {
+                        val idx = type.substringAfter("CUSTOM_").toIntOrNull() ?: 11
+                        curCustomTemplateNames.value = curCustomTemplateNames.value.toMutableMap().apply {
+                            put(idx, templateName)
+                        }
+                        activeCustomDocs.value[idx]?.toJson() ?: ""
+                    } else ""
+                }
             }
 
             // Check if template of same type & name exists to replace it
@@ -449,6 +554,27 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                     activeBusinessLetter.value = BusinessLetterData.fromJson(templateDoc.contentJson)
                     curBusinessLetterTemplateName.value = templateDoc.name
                     triggerAutosave("BUSINESS_LETTER", templateDoc.contentJson)
+                }
+                else -> {
+                    if (templateDoc.type.startsWith("DYNAMIC_")) {
+                        val idx = templateDoc.type.substringAfter("DYNAMIC_").toIntOrNull() ?: 11
+                        activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
+                            put(idx, templateDoc.contentJson)
+                        }
+                        curDynamicTemplateNames.value = curDynamicTemplateNames.value.toMutableMap().apply {
+                            put(idx, templateDoc.name)
+                        }
+                        triggerAutosave("DYNAMIC_$idx", templateDoc.contentJson)
+                    } else if (templateDoc.type.startsWith("CUSTOM_")) {
+                        val idx = templateDoc.type.substringAfter("CUSTOM_").toIntOrNull() ?: 11
+                        activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
+                            put(idx, CustomDocumentData.fromJson(templateDoc.contentJson))
+                        }
+                        curCustomTemplateNames.value = curCustomTemplateNames.value.toMutableMap().apply {
+                            put(idx, templateDoc.name)
+                        }
+                        triggerAutosave("CUSTOM_$idx", templateDoc.contentJson)
+                    }
                 }
             }
         }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.rotate
 import androidx.compose.runtime.staticCompositionLocalOf
+import coil.compose.AsyncImage
 import com.example.data.*
 import com.example.util.DocExporter
 import java.text.SimpleDateFormat
@@ -29,9 +31,11 @@ import java.util.Locale
 data class DocumentStyleConfig(
     val useWatermark: Boolean = false,
     val watermarkText: String = "",
+    val watermarkImageUri: String = "",
     val useSignature: Boolean = false,
     val signatureText: String = "",
     val signatureStyle: String = "Cursive",
+    val signatureBitmapBase64: String = "",
     val spacingMultiplier: Float = 1.0f
 )
 
@@ -66,7 +70,7 @@ fun PaperCanvas(
                 content()
                 
                 // If digital signature is enabled, append signature under professional line
-                if (styleConfig.useSignature && styleConfig.signatureText.isNotBlank()) {
+                if (styleConfig.useSignature) {
                     Spacer(modifier = Modifier.height((24 * spacingMultiplier).dp))
                     Column(
                         modifier = Modifier.align(Alignment.End),
@@ -79,15 +83,27 @@ fun PaperCanvas(
                             fontWeight = FontWeight.Medium
                         )
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = styleConfig.signatureText,
-                            fontSize = (15 * spacingMultiplier).sp,
-                            fontStyle = if (styleConfig.signatureStyle == "Cursive") FontStyle.Italic else FontStyle.Normal,
-                            fontWeight = if (styleConfig.signatureStyle == "Official Bold") FontWeight.Bold else FontWeight.Medium,
-                            fontFamily = if (styleConfig.signatureStyle == "Cursive") FontFamily.Serif else FontFamily.SansSerif,
-                            color = Color(0xFF0D47A1), // professional signature color
-                            textAlign = TextAlign.Center
-                        )
+                        if (styleConfig.signatureBitmapBase64.isNotBlank()) {
+                            val imageBytes = android.util.Base64.decode(styleConfig.signatureBitmapBase64, android.util.Base64.DEFAULT)
+                            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                            if (bitmap != null) {
+                                androidx.compose.foundation.Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Signature",
+                                    modifier = Modifier.height((40 * spacingMultiplier).dp)
+                                )
+                            }
+                        } else if (styleConfig.signatureText.isNotBlank()) {
+                            Text(
+                                text = styleConfig.signatureText,
+                                fontSize = (15 * spacingMultiplier).sp,
+                                fontStyle = if (styleConfig.signatureStyle == "Cursive") FontStyle.Italic else FontStyle.Normal,
+                                fontWeight = if (styleConfig.signatureStyle == "Official Bold") FontWeight.Bold else FontWeight.Medium,
+                                fontFamily = if (styleConfig.signatureStyle == "Cursive") FontFamily.Serif else FontFamily.SansSerif,
+                                color = Color(0xFF0D47A1), // professional signature color
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Box(
                             modifier = Modifier
                                 .width((120 * spacingMultiplier).dp)
@@ -99,7 +115,7 @@ fun PaperCanvas(
             }
 
             // Watermark overlay layer
-            if (styleConfig.useWatermark && styleConfig.watermarkText.isNotBlank()) {
+            if (styleConfig.useWatermark) {
                 Box(
                     modifier = Modifier
                         .matchParentSize()
@@ -107,17 +123,29 @@ fun PaperCanvas(
                         .background(Color.Transparent),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = styleConfig.watermarkText,
-                        fontSize = 38.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color(0x139E9E9E), // subtle opacity watermark
-                        textAlign = TextAlign.Center,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 2.sp,
-                        maxLines = 1,
-                        modifier = Modifier.rotate(-35f)
-                    )
+                    if (styleConfig.watermarkImageUri.isNotBlank()) {
+                        AsyncImage(
+                            model = styleConfig.watermarkImageUri,
+                            contentDescription = "Watermark",
+                            modifier = Modifier
+                                .fillMaxSize(0.6f)
+                                .rotate(-35f),
+                            alpha = 0.15f,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                        )
+                    } else if (styleConfig.watermarkText.isNotBlank()) {
+                        Text(
+                            text = styleConfig.watermarkText,
+                            fontSize = 38.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0x139E9E9E), // subtle opacity watermark
+                            textAlign = TextAlign.Center,
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = 2.sp,
+                            maxLines = 1,
+                            modifier = Modifier.rotate(-35f)
+                        )
+                    }
                 }
             }
         }

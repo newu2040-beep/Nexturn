@@ -96,9 +96,11 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
     val useSignatureState by viewModel.useSignature.collectAsStateWithLifecycle()
     val signatureTextState by viewModel.signatureText.collectAsStateWithLifecycle()
     val signatureStyleState by viewModel.signatureStyle.collectAsStateWithLifecycle()
+    val signatureBitmapState by viewModel.signatureBitmapBase64.collectAsStateWithLifecycle()
 
     val useWatermarkState by viewModel.useWatermark.collectAsStateWithLifecycle()
     val watermarkTextState by viewModel.watermarkText.collectAsStateWithLifecycle()
+    val watermarkImageUriState by viewModel.watermarkImageUri.collectAsStateWithLifecycle()
 
     val universalSizeState by viewModel.universalSizeIndex.collectAsStateWithLifecycle()
     val spacingMultiplier = when(universalSizeState) {
@@ -110,9 +112,11 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
     val styleConfig = DocumentStyleConfig(
         useWatermark = useWatermarkState,
         watermarkText = watermarkTextState,
+        watermarkImageUri = watermarkImageUriState,
         useSignature = useSignatureState,
         signatureText = signatureTextState,
         signatureStyle = signatureStyleState,
+        signatureBitmapBase64 = signatureBitmapState,
         spacingMultiplier = spacingMultiplier
     )
 
@@ -291,6 +295,20 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
                         }
                     }
+                    else -> {
+                        val json = viewModel.activeDynamicJsons.value[selectedTab] ?: ""
+                        if (format == "TXT") {
+                            val txt = DocExporter.generateDynamicTxt(selectedTab, json)
+                            val file = DocExporter.writeTextToFile(context, txt, "dynamic_doc.txt")
+                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
+                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                        } else {
+                            val file = DocExporter.generateDynamicPdf(context, selectedTab, json)
+                            if (actionType == "print") DocExporter.printPdf(context, file)
+                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
+                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Offline export error: ${e.message}", Toast.LENGTH_LONG).show()
@@ -416,6 +434,13 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             }
                         },
                         actions = {
+                            var showProfileDialog by remember { mutableStateOf(false) }
+                            if (showProfileDialog) {
+                                UserProfileDialog(viewModel) { showProfileDialog = false }
+                            }
+                            IconButton(onClick = { showProfileDialog = true }) {
+                                Icon(Icons.Default.Person, contentDescription = "User Profile", tint = MaterialTheme.colorScheme.primary)
+                            }
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Default.Palette, contentDescription = "Palette Customizer", tint = MaterialTheme.colorScheme.primary)
                             }
@@ -561,14 +586,18 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                                 .background(MaterialTheme.colorScheme.background)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            // Prompt Guidance wizard box
-                            PromptBox(title = activePromptTitle, prompt = activePromptText)
-
-                            Spacer(modifier = Modifier.height(10.dp))
+                            if (focusedField.value.isNotEmpty()) {
+                                PromptBox(title = activePromptTitle, prompt = activePromptText)
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
 
                             // Render Selected Form
                             Box(modifier = Modifier.weight(1f)) {
-                                RenderActiveForm(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, focusedField, highlightIfEmpty)
+                                if (selectedTab < 11) {
+                                    RenderActiveForm(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, focusedField, highlightIfEmpty)
+                                } else {
+                                    RenderDynamicForm(selectedTab, viewModel, focusedField, highlightIfEmpty)
+                                }
                             }
                         }
 
@@ -613,9 +642,13 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             
                             Box(modifier = Modifier.weight(1f)) {
                                 CompositionLocalProvider(LocalDocumentStyleConfig provides styleConfig) {
+                                if (selectedTab < 11) {
                                     RenderActivePreview(selectedTab, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
                                         focusedField.value = clickedFieldName
                                     }
+                                } else {
+                                    RenderDynamicPreview(selectedTab, viewModel, activePaperColor)
+                                }
                                 }
                             }
                         }
@@ -628,10 +661,16 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                                 .fillMaxSize()
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
-                            PromptBox(title = activePromptTitle, prompt = activePromptText)
-                            Spacer(modifier = Modifier.height(8.dp))
+                            if (focusedField.value.isNotEmpty()) {
+                                PromptBox(title = activePromptTitle, prompt = activePromptText)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                             Box(modifier = Modifier.weight(1f)) {
-                                RenderActiveForm(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, focusedField, highlightIfEmpty)
+                                if (selectedTab < 11) {
+                                    RenderActiveForm(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, focusedField, highlightIfEmpty)
+                                } else {
+                                    RenderDynamicForm(selectedTab, viewModel, focusedField, highlightIfEmpty)
+                                }
                             }
                         }
                     } else {
@@ -669,9 +708,13 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Box(modifier = Modifier.weight(1f)) {
                                 CompositionLocalProvider(LocalDocumentStyleConfig provides styleConfig) {
-                                    RenderActivePreview(selectedTab, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
-                                        focusedField.value = clickedFieldName
-                                        compactModePane = 0 // Switch back to form so they can type instantly!
+                                    if (selectedTab < 11) {
+                                        RenderActivePreview(selectedTab, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
+                                            focusedField.value = clickedFieldName
+                                            compactModePane = 0 // Switch back to form so they can type instantly!
+                                        }
+                                    } else {
+                                        RenderDynamicPreview(selectedTab, viewModel, activePaperColor)
                                     }
                                 }
                             }
@@ -1247,6 +1290,17 @@ fun DashboardDrawerContent(
 
     val useWatermarkState by viewModel.useWatermark.collectAsStateWithLifecycle()
     val watermarkTextState by viewModel.watermarkText.collectAsStateWithLifecycle()
+    val watermarkImageUriState by viewModel.watermarkImageUri.collectAsStateWithLifecycle()
+
+    var showDigitalSignatureDialog by remember { mutableStateOf(false) }
+
+    val watermarkLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.setWatermarkImageUri(uri.toString())
+        }
+    }
 
     val universalSizeState by viewModel.universalSizeIndex.collectAsStateWithLifecycle()
 
@@ -1283,6 +1337,8 @@ fun DashboardDrawerContent(
 
     val businessLetterTemplates by viewModel.savedBusinessLetterTemplates.collectAsStateWithLifecycle()
     val curBusinessLetterTemplateName by viewModel.curBusinessLetterTemplateName.collectAsStateWithLifecycle()
+
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val themes = listOf(
         Triple("Lavender Mint", "🌸", if (isDark) LavenderDarkPrimary else LavenderLightPrimary),
@@ -1388,10 +1444,23 @@ fun DashboardDrawerContent(
                 Triple(4, "Project Proposal", Icons.Default.Assessment),
                 Triple(5, "Offer Letter (Job Offer)", Icons.Default.Work),
                 Triple(6, "Resignation Letter", Icons.Default.ExitToApp),
-                Triple(7, "Service Contract / Agreement", Icons.Default.Edit),
+                Triple(7, "Service Contract", Icons.Default.Edit),
                 Triple(8, "Certificate of Completion", Icons.Default.Star),
                 Triple(9, "Meeting Minutes", Icons.Default.List),
-                Triple(10, "Business Letter", Icons.Default.Business)
+                Triple(10, "Business Letter", Icons.Default.Business),
+                Triple(11, "Reference Letter", Icons.Default.Person),
+                Triple(12, "Purchase Order", Icons.Default.ShoppingCart),
+                Triple(13, "Quote / Estimate", Icons.Default.RequestQuote),
+                Triple(14, "Non-Disclosure Agreement", Icons.Default.Security),
+                Triple(15, "Timesheet", Icons.Default.AccessTime),
+                Triple(16, "Expense Report", Icons.Default.AttachMoney),
+                Triple(17, "Press Release", Icons.Default.Campaign),
+                Triple(18, "Memo (Internal)", Icons.Default.Message),
+                Triple(19, "Thank-You Letter", Icons.Default.ThumbUp),
+                Triple(20, "Acceptance Letter", Icons.Default.TaskAlt),
+                Triple(21, "Termination Letter", Icons.Default.Cancel),
+                Triple(22, "Performance Review", Icons.Default.TrendingUp),
+                Triple(23, "Custom Layout", Icons.Default.Build)
             )
 
             docTypes.forEach { (index, title, icon) ->
@@ -1573,14 +1642,35 @@ fun DashboardDrawerContent(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // List of saved templates
-                Text(
-                    text = "Saved $curDocTypeName Presets (Click to Load):",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(bottom = 6.dp)
+                var searchQuery by remember { mutableStateOf("") }
+                
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Saved $curDocTypeName Presets:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 6.dp).weight(1f)
+                    )
+                    if (currentTypeList.isNotEmpty()) {
+                        IconButton(onClick = { DocExporter.batchExport(context, currentTypeList, "PDF") }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Archive, contentDescription = "Batch Export", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search & filter...", style = MaterialTheme.typography.labelSmall) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp).padding(bottom = 6.dp),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) }
                 )
 
-                if (currentTypeList.isEmpty()) {
+                val filteredList = currentTypeList.filter { it.name.contains(searchQuery, ignoreCase = true) }
+
+                if (filteredList.isEmpty()) {
                     Text(
                         text = "No saved presets yet.",
                         style = MaterialTheme.typography.bodySmall,
@@ -1588,7 +1678,7 @@ fun DashboardDrawerContent(
                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                     )
                 } else {
-                    currentTypeList.forEach { template ->
+                    filteredList.forEach { template ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1881,6 +1971,16 @@ fun DashboardDrawerContent(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Button(
+                        onClick = { showDigitalSignatureDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Create, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Draw Digital Signature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                    Button(
                         onClick = {
                             viewModel.setSignatureText("Verified Seal " + SimpleDateFormat("yyMMdd-HH", Locale.getDefault()).format(Date()))
                             viewModel.setSignatureStyle("Official Bold")
@@ -1949,6 +2049,22 @@ fun DashboardDrawerContent(
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { watermarkLauncher.launch("image/*") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Import Custom Watermark", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                    }
+                    if (watermarkImageUriState.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.setWatermarkImageUri("") }) {
+                            Text("Clear Custom Image Watermark", style = MaterialTheme.typography.labelSmall, color = Color.Red)
+                        }
+                    }
                 }
             }
 
@@ -2008,5 +2124,15 @@ fun DashboardDrawerContent(
                 Text("Close Settings")
             }
         }
+    }
+
+    if (showDigitalSignatureDialog) {
+        DigitalSignatureDialog(
+            onDismiss = { showDigitalSignatureDialog = false },
+            onSave = { base64 ->
+                viewModel.setSignatureBitmapBase64(base64)
+                showDigitalSignatureDialog = false
+            }
+        )
     }
 }
