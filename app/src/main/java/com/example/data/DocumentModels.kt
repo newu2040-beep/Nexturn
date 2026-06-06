@@ -517,3 +517,254 @@ data class ProposalData(
         }
     }
 }
+
+data class OfferLetterData(
+    val candidateName: String = "",
+    val jobTitle: String = "",
+    val salary: String = "",
+    val startDate: String = "",
+    val companyName: String = "",
+    val companyAddress: String = "",
+    val signatoryName: String = "",
+    val signatoryTitle: String = "",
+    val offerDetails: String = ""
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("candidateName", candidateName)
+            put("jobTitle", jobTitle)
+            put("salary", salary)
+            put("startDate", startDate)
+            put("companyName", companyName)
+            put("companyAddress", companyAddress)
+            put("signatoryName", signatoryName)
+            put("signatoryTitle", signatoryTitle)
+            put("offerDetails", offerDetails)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): OfferLetterData {
+            if (jsonStr.isEmpty()) return OfferLetterData()
+            val json = JSONObject(jsonStr)
+            return OfferLetterData(
+                candidateName = json.optString("candidateName", ""),
+                jobTitle = json.optString("jobTitle", ""),
+                salary = json.optString("salary", ""),
+                startDate = json.optString("startDate", ""),
+                companyName = json.optString("companyName", ""),
+                companyAddress = json.optString("companyAddress", ""),
+                signatoryName = json.optString("signatoryName", ""),
+                signatoryTitle = json.optString("signatoryTitle", ""),
+                offerDetails = json.optString("offerDetails", "")
+            )
+        }
+    }
+}
+
+data class ResignationLetterData(
+    val employeeName: String = "",
+    val managerName: String = "",
+    val companyName: String = "",
+    val lastWorkingDay: String = "",
+    val resignationReason: String = "",
+    val personalNote: String = "",
+    val signatureName: String = ""
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("employeeName", employeeName)
+            put("managerName", managerName)
+            put("companyName", companyName)
+            put("lastWorkingDay", lastWorkingDay)
+            put("resignationReason", resignationReason)
+            put("personalNote", personalNote)
+            put("signatureName", signatureName)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): ResignationLetterData {
+            if (jsonStr.isEmpty()) return ResignationLetterData()
+            val json = JSONObject(jsonStr)
+            return ResignationLetterData(
+                employeeName = json.optString("employeeName", ""),
+                managerName = json.optString("managerName", ""),
+                companyName = json.optString("companyName", ""),
+                lastWorkingDay = json.optString("lastWorkingDay", ""),
+                resignationReason = json.optString("resignationReason", ""),
+                personalNote = json.optString("personalNote", ""),
+                signatureName = json.optString("signatureName", "")
+            )
+        }
+    }
+}
+
+data class ServiceContractData(
+    val contractorName: String = "",
+    val clientName: String = "",
+    val agreementDate: String = "",
+    val scopeOfWork: String = "",
+    val paymentTerms: String = "",
+    val compensation: String = "",
+    val governingLaw: String = "Delaware"
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("contractorName", contractorName)
+            put("clientName", clientName)
+            put("agreementDate", agreementDate)
+            put("scopeOfWork", scopeOfWork)
+            put("paymentTerms", paymentTerms)
+            put("compensation", compensation)
+            put("governingLaw", governingLaw)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): ServiceContractData {
+            if (jsonStr.isEmpty()) return ServiceContractData()
+            val json = JSONObject(jsonStr)
+            return ServiceContractData(
+                contractorName = json.optString("contractorName", ""),
+                clientName = json.optString("clientName", ""),
+                agreementDate = json.optString("agreementDate", ""),
+                scopeOfWork = json.optString("scopeOfWork", ""),
+                paymentTerms = json.optString("paymentTerms", ""),
+                compensation = json.optString("compensation", ""),
+                governingLaw = json.optString("governingLaw", "Delaware")
+            )
+        }
+    }
+}
+
+data class CertificateData(
+    val recipientName: String = "",
+    val achievementTitle: String = "",
+    val awardingOrg: String = "",
+    val dateOfIssue: String = "",
+    val certificateDescription: String = "",
+    val authoritySignatory: String = ""
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("recipientName", recipientName)
+            put("achievementTitle", achievementTitle)
+            put("awardingOrg", awardingOrg)
+            put("dateOfIssue", dateOfIssue)
+            put("certificateDescription", certificateDescription)
+            put("authoritySignatory", authoritySignatory)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): CertificateData {
+            if (jsonStr.isEmpty()) return CertificateData()
+            val json = JSONObject(jsonStr)
+            return CertificateData(
+                recipientName = json.optString("recipientName", ""),
+                achievementTitle = json.optString("achievementTitle", ""),
+                awardingOrg = json.optString("awardingOrg", ""),
+                dateOfIssue = json.optString("dateOfIssue", ""),
+                certificateDescription = json.optString("certificateDescription", ""),
+                authoritySignatory = json.optString("authoritySignatory", "")
+            )
+        }
+    }
+}
+
+data class MeetingMinutesData(
+    val meetingTitle: String = "",
+    val meetingDate: String = "",
+    val facilitator: String = "",
+    val attendees: String = "",
+    val discussionSummary: String = "",
+    val actionItems: List<String> = emptyList(),
+    val nextMeetingDate: String = ""
+) {
+    fun toJson(): String {
+        val json = JSONObject()
+        json.put("meetingTitle", meetingTitle)
+        json.put("meetingDate", meetingDate)
+        json.put("facilitator", facilitator)
+        json.put("attendees", attendees)
+        json.put("discussionSummary", discussionSummary)
+        json.put("nextMeetingDate", nextMeetingDate)
+        
+        val actArray = JSONArray()
+        actionItems.forEach { actArray.put(it) }
+        json.put("actionItems", actArray)
+        return json.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): MeetingMinutesData {
+            if (jsonStr.isEmpty()) return MeetingMinutesData()
+            val json = JSONObject(jsonStr)
+            val actions = mutableListOf<String>()
+            val actArray = json.optJSONArray("actionItems")
+            if (actArray != null) {
+                for (i in 0 until actArray.length()) {
+                    actions.add(actArray.optString(i, ""))
+                }
+            }
+            return MeetingMinutesData(
+                meetingTitle = json.optString("meetingTitle", ""),
+                meetingDate = json.optString("meetingDate", ""),
+                facilitator = json.optString("facilitator", ""),
+                attendees = json.optString("attendees", ""),
+                discussionSummary = json.optString("discussionSummary", ""),
+                actionItems = actions,
+                nextMeetingDate = json.optString("nextMeetingDate", "")
+            )
+        }
+    }
+}
+
+data class BusinessLetterData(
+    val senderAddress: String = "",
+    val recipientAddress: String = "",
+    val date: String = "",
+    val subject: String = "",
+    val salutation: String = "Dear Recipient,",
+    val paragraph1: String = "",
+    val paragraph2: String = "",
+    val paragraph3: String = "",
+    val valediction: String = "Sincerely,",
+    val senderName: String = ""
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("senderAddress", senderAddress)
+            put("recipientAddress", recipientAddress)
+            put("date", date)
+            put("subject", subject)
+            put("salutation", salutation)
+            put("paragraph1", paragraph1)
+            put("paragraph2", paragraph2)
+            put("paragraph3", paragraph3)
+            put("valediction", valediction)
+            put("senderName", senderName)
+        }.toString()
+    }
+
+    companion object {
+        fun fromJson(jsonStr: String): BusinessLetterData {
+            if (jsonStr.isEmpty()) return BusinessLetterData()
+            val json = JSONObject(jsonStr)
+            return BusinessLetterData(
+                senderAddress = json.optString("senderAddress", ""),
+                recipientAddress = json.optString("recipientAddress", ""),
+                date = json.optString("date", ""),
+                subject = json.optString("subject", ""),
+                salutation = json.optString("salutation", "Dear Recipient,"),
+                paragraph1 = json.optString("paragraph1", ""),
+                paragraph2 = json.optString("paragraph2", ""),
+                paragraph3 = json.optString("paragraph3", ""),
+                valediction = json.optString("valediction", "Sincerely,"),
+                senderName = json.optString("senderName", "")
+            )
+        }
+    }
+}
+

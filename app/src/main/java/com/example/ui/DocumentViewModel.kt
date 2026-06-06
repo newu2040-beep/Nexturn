@@ -20,6 +20,16 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     private val prefs = application.getSharedPreferences("nexturn_theme_prefs", android.content.Context.MODE_PRIVATE)
     val isDarkTheme = MutableStateFlow(prefs.getBoolean("is_dark_theme", false))
     val selectedThemeIndex = MutableStateFlow(prefs.getInt("selected_theme_index", 0)) // 0: Lavender, 1: Peach, 2: Cherry, 3: Ocean, 4: Sage
+    val selectedPaperIndex = MutableStateFlow(prefs.getInt("selected_paper_index", 0)) // 0: White, 1: Cream, 2: Manila, 3: Ash, 4: Mint, 5: Rose
+
+    val useSignature = MutableStateFlow(prefs.getBoolean("use_signature", false))
+    val signatureText = MutableStateFlow(prefs.getString("signature_text", "") ?: "")
+    val signatureStyle = MutableStateFlow(prefs.getString("signature_style", "Cursive") ?: "Cursive")
+
+    val useWatermark = MutableStateFlow(prefs.getBoolean("use_watermark", false))
+    val watermarkText = MutableStateFlow(prefs.getString("watermark_text", "CONFIDENTIAL") ?: "CONFIDENTIAL")
+
+    val universalSizeIndex = MutableStateFlow(prefs.getInt("universal_size_index", 1)) // 0: Compact, 1: Balanced, 2: Spacious
 
     fun toggleThemeMode() {
         val nextMode = !isDarkTheme.value
@@ -32,12 +42,53 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().putInt("selected_theme_index", index).apply()
     }
 
+    fun selectPaperIndex(index: Int) {
+        selectedPaperIndex.value = index
+        prefs.edit().putInt("selected_paper_index", index).apply()
+    }
+
+    fun setUseSignature(value: Boolean) {
+        useSignature.value = value
+        prefs.edit().putBoolean("use_signature", value).apply()
+    }
+
+    fun setSignatureText(value: String) {
+        signatureText.value = value
+        prefs.edit().putString("signature_text", value).apply()
+    }
+
+    fun setSignatureStyle(value: String) {
+        signatureStyle.value = value
+        prefs.edit().putString("signature_style", value).apply()
+    }
+
+    fun setUseWatermark(value: Boolean) {
+        useWatermark.value = value
+        prefs.edit().putBoolean("use_watermark", value).apply()
+    }
+
+    fun setWatermarkText(value: String) {
+        watermarkText.value = value
+        prefs.edit().putString("watermark_text", value).apply()
+    }
+
+    fun setUniversalSizeIndex(value: Int) {
+        universalSizeIndex.value = value
+        prefs.edit().putInt("universal_size_index", value).apply()
+    }
+
     // Active edit state for each document
     val activeCv = MutableStateFlow(CvData())
     val activeCoverLetter = MutableStateFlow(CoverLetterData())
     val activeEmail = MutableStateFlow(EmailData())
     val activeInvoice = MutableStateFlow(InvoiceData())
     val activeProposal = MutableStateFlow(ProposalData())
+    val activeOfferLetter = MutableStateFlow(OfferLetterData())
+    val activeResignationLetter = MutableStateFlow(ResignationLetterData())
+    val activeServiceContract = MutableStateFlow(ServiceContractData())
+    val activeCertificate = MutableStateFlow(CertificateData())
+    val activeMeetingMinutes = MutableStateFlow(MeetingMinutesData())
+    val activeBusinessLetter = MutableStateFlow(BusinessLetterData())
 
     // Currently loaded template name/id
     val curCvTemplateName = MutableStateFlow<String?>(null)
@@ -45,6 +96,12 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     val curEmailTemplateName = MutableStateFlow<String?>(null)
     val curInvoiceTemplateName = MutableStateFlow<String?>(null)
     val curProposalTemplateName = MutableStateFlow<String?>(null)
+    val curOfferLetterTemplateName = MutableStateFlow<String?>(null)
+    val curResignationLetterTemplateName = MutableStateFlow<String?>(null)
+    val curServiceContractTemplateName = MutableStateFlow<String?>(null)
+    val curCertificateTemplateName = MutableStateFlow<String?>(null)
+    val curMeetingMinutesTemplateName = MutableStateFlow<String?>(null)
+    val curBusinessLetterTemplateName = MutableStateFlow<String?>(null)
 
     // Lists of saved templates from database
     val savedCvTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("CV")
@@ -60,6 +117,24 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val savedProposalTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("PROPOSAL")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedOfferLetterTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("OFFER_LETTER")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedResignationLetterTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("RESIGNATION_LETTER")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedServiceContractTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("SERVICE_CONTRACT")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedCertificateTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("CERTIFICATE")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedMeetingMinutesTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("MEETING_MINUTES")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val savedBusinessLetterTemplates: StateFlow<List<SavedDocument>> = repository.getTemplatesByType("BUSINESS_LETTER")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
@@ -84,6 +159,24 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         }
         repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "PROPOSAL")?.let { doc ->
             activeProposal.value = ProposalData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "OFFER_LETTER")?.let { doc ->
+            activeOfferLetter.value = OfferLetterData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "RESIGNATION_LETTER")?.let { doc ->
+            activeResignationLetter.value = ResignationLetterData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "SERVICE_CONTRACT")?.let { doc ->
+            activeServiceContract.value = ServiceContractData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "CERTIFICATE")?.let { doc ->
+            activeCertificate.value = CertificateData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "MEETING_MINUTES")?.let { doc ->
+            activeMeetingMinutes.value = MeetingMinutesData.fromJson(doc.contentJson)
+        }
+        repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "BUSINESS_LETTER")?.let { doc ->
+            activeBusinessLetter.value = BusinessLetterData.fromJson(doc.contentJson)
         }
     }
 
@@ -135,6 +228,42 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         triggerAutosave("PROPOSAL", next.toJson())
     }
 
+    fun updateOfferLetter(updater: (OfferLetterData) -> OfferLetterData) {
+        val next = updater(activeOfferLetter.value)
+        activeOfferLetter.value = next
+        triggerAutosave("OFFER_LETTER", next.toJson())
+    }
+
+    fun updateResignationLetter(updater: (ResignationLetterData) -> ResignationLetterData) {
+        val next = updater(activeResignationLetter.value)
+        activeResignationLetter.value = next
+        triggerAutosave("RESIGNATION_LETTER", next.toJson())
+    }
+
+    fun updateServiceContract(updater: (ServiceContractData) -> ServiceContractData) {
+        val next = updater(activeServiceContract.value)
+        activeServiceContract.value = next
+        triggerAutosave("SERVICE_CONTRACT", next.toJson())
+    }
+
+    fun updateCertificate(updater: (CertificateData) -> CertificateData) {
+        val next = updater(activeCertificate.value)
+        activeCertificate.value = next
+        triggerAutosave("CERTIFICATE", next.toJson())
+    }
+
+    fun updateMeetingMinutes(updater: (MeetingMinutesData) -> MeetingMinutesData) {
+        val next = updater(activeMeetingMinutes.value)
+        activeMeetingMinutes.value = next
+        triggerAutosave("MEETING_MINUTES", next.toJson())
+    }
+
+    fun updateBusinessLetter(updater: (BusinessLetterData) -> BusinessLetterData) {
+        val next = updater(activeBusinessLetter.value)
+        activeBusinessLetter.value = next
+        triggerAutosave("BUSINESS_LETTER", next.toJson())
+    }
+
     // Reset current active document to clean state
     fun resetDocument(type: String) {
         viewModelScope.launch {
@@ -164,6 +293,36 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                     curProposalTemplateName.value = null
                     repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "PROPOSAL", contentJson = ProposalData().toJson()))
                 }
+                "OFFER_LETTER" -> {
+                    activeOfferLetter.value = OfferLetterData()
+                    curOfferLetterTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "OFFER_LETTER", contentJson = OfferLetterData().toJson()))
+                }
+                "RESIGNATION_LETTER" -> {
+                    activeResignationLetter.value = ResignationLetterData()
+                    curResignationLetterTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "RESIGNATION_LETTER", contentJson = ResignationLetterData().toJson()))
+                }
+                "SERVICE_CONTRACT" -> {
+                    activeServiceContract.value = ServiceContractData()
+                    curServiceContractTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "SERVICE_CONTRACT", contentJson = ServiceContractData().toJson()))
+                }
+                "CERTIFICATE" -> {
+                    activeCertificate.value = CertificateData()
+                    curCertificateTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "CERTIFICATE", contentJson = CertificateData().toJson()))
+                }
+                "MEETING_MINUTES" -> {
+                    activeMeetingMinutes.value = MeetingMinutesData()
+                    curMeetingMinutesTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "MEETING_MINUTES", contentJson = MeetingMinutesData().toJson()))
+                }
+                "BUSINESS_LETTER" -> {
+                    activeBusinessLetter.value = BusinessLetterData()
+                    curBusinessLetterTemplateName.value = null
+                    repository.saveDocument(SavedDocument(type = "ACTIVE_DRAFT", name = "BUSINESS_LETTER", contentJson = BusinessLetterData().toJson()))
+                }
             }
         }
     }
@@ -191,6 +350,30 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                 "PROPOSAL" -> {
                     curProposalTemplateName.value = templateName
                     activeProposal.value.toJson()
+                }
+                "OFFER_LETTER" -> {
+                    curOfferLetterTemplateName.value = templateName
+                    activeOfferLetter.value.toJson()
+                }
+                "RESIGNATION_LETTER" -> {
+                    curResignationLetterTemplateName.value = templateName
+                    activeResignationLetter.value.toJson()
+                }
+                "SERVICE_CONTRACT" -> {
+                    curServiceContractTemplateName.value = templateName
+                    activeServiceContract.value.toJson()
+                }
+                "CERTIFICATE" -> {
+                    curCertificateTemplateName.value = templateName
+                    activeCertificate.value.toJson()
+                }
+                "MEETING_MINUTES" -> {
+                    curMeetingMinutesTemplateName.value = templateName
+                    activeMeetingMinutes.value.toJson()
+                }
+                "BUSINESS_LETTER" -> {
+                    curBusinessLetterTemplateName.value = templateName
+                    activeBusinessLetter.value.toJson()
                 }
                 else -> ""
             }
@@ -236,6 +419,36 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
                     activeProposal.value = ProposalData.fromJson(templateDoc.contentJson)
                     curProposalTemplateName.value = templateDoc.name
                     triggerAutosave("PROPOSAL", templateDoc.contentJson)
+                }
+                "OFFER_LETTER" -> {
+                    activeOfferLetter.value = OfferLetterData.fromJson(templateDoc.contentJson)
+                    curOfferLetterTemplateName.value = templateDoc.name
+                    triggerAutosave("OFFER_LETTER", templateDoc.contentJson)
+                }
+                "RESIGNATION_LETTER" -> {
+                    activeResignationLetter.value = ResignationLetterData.fromJson(templateDoc.contentJson)
+                    curResignationLetterTemplateName.value = templateDoc.name
+                    triggerAutosave("RESIGNATION_LETTER", templateDoc.contentJson)
+                }
+                "SERVICE_CONTRACT" -> {
+                    activeServiceContract.value = ServiceContractData.fromJson(templateDoc.contentJson)
+                    curServiceContractTemplateName.value = templateDoc.name
+                    triggerAutosave("SERVICE_CONTRACT", templateDoc.contentJson)
+                }
+                "CERTIFICATE" -> {
+                    activeCertificate.value = CertificateData.fromJson(templateDoc.contentJson)
+                    curCertificateTemplateName.value = templateDoc.name
+                    triggerAutosave("CERTIFICATE", templateDoc.contentJson)
+                }
+                "MEETING_MINUTES" -> {
+                    activeMeetingMinutes.value = MeetingMinutesData.fromJson(templateDoc.contentJson)
+                    curMeetingMinutesTemplateName.value = templateDoc.name
+                    triggerAutosave("MEETING_MINUTES", templateDoc.contentJson)
+                }
+                "BUSINESS_LETTER" -> {
+                    activeBusinessLetter.value = BusinessLetterData.fromJson(templateDoc.contentJson)
+                    curBusinessLetterTemplateName.value = templateDoc.name
+                    triggerAutosave("BUSINESS_LETTER", templateDoc.contentJson)
                 }
             }
         }

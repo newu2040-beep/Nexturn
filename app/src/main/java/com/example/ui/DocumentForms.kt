@@ -44,41 +44,6 @@ fun CvForm(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp)
     ) {
-        // STYLE & LAYOUT SELECTORS
-        item {
-            Text("🎨 CV/Résumé Presentation Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                // Style Pref
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Theme Style", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                    listOf("Modern", "Minimal", "Professional", "Creative").forEach { style ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = (data.stylePreference == style),
-                                onClick = { onDataChanged(data.copy(stylePreference = style)) }
-                            )
-                            Text(style, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-                // Layout Pref
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Column Layout", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                    listOf("Sidebar Layout", "Single Column").forEach { ly ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = (data.layout == ly),
-                                onClick = { onDataChanged(data.copy(layout = ly)) }
-                            )
-                            Text(ly, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-        }
-
         // HEADER INFO
         item {
             Text("👤 Personal Header Info", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -1254,3 +1219,736 @@ fun ProposalForm(
         }
     }
 }
+
+@Composable
+fun OfferLetterForm(
+    data: OfferLetterData,
+    onDataChanged: (OfferLetterData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("💼 Offer Letter (Job Offer) Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            HighlightField(
+                value = data.candidateName,
+                onValueChange = { onDataChanged(data.copy(candidateName = it)) },
+                label = "Candidate Full Name",
+                promptText = "The complete name of the candidate who is receiving this job offer.",
+                placeholder = "e.g. Sarah Connor",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "candidateName",
+                leadingIcon = Icons.Default.Person
+            )
+            
+            HighlightField(
+                value = data.jobTitle,
+                onValueChange = { onDataChanged(data.copy(jobTitle = it)) },
+                label = "Proposed Job Title",
+                promptText = "The exact name of the role the candidate is being hired into.",
+                placeholder = "e.g. Senior Staff Security Specialist",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "jobTitle",
+                leadingIcon = Icons.Default.Badge
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.salary,
+                        onValueChange = { onDataChanged(data.copy(salary = it)) },
+                        label = "Proposed Compensation/Salary",
+                        promptText = "Annual or monthly payment rate details.",
+                        placeholder = "e.g. $140,000 / year",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "salary",
+                        leadingIcon = Icons.Default.AttachMoney
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.startDate,
+                        onValueChange = { onDataChanged(data.copy(startDate = it)) },
+                        label = "Proposed Start Date",
+                        promptText = "Calendar date or timeline of commencement.",
+                        placeholder = "e.g. July 1st, 2026",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "startDate",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.companyName,
+                onValueChange = { onDataChanged(data.copy(companyName = it)) },
+                label = "Company Name",
+                promptText = "The full legal name of the organization.",
+                placeholder = "e.g. Cyberdyne Systems Corp.",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "companyName",
+                leadingIcon = Icons.Default.Business
+            )
+
+            HighlightField(
+                value = data.companyAddress,
+                onValueChange = { onDataChanged(data.copy(companyAddress = it)) },
+                label = "Company Office Address",
+                promptText = "Street, Suite number, and State region locations.",
+                placeholder = "e.g. 18111 Nordhoff St, Northridge, CA",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "companyAddress",
+                leadingIcon = Icons.Default.Home
+            )
+
+            HighlightField(
+                value = data.signatoryName,
+                onValueChange = { onDataChanged(data.copy(signatoryName = it)) },
+                label = "Authorized Signatory Name",
+                promptText = "Who is offering this letter? (The hire manager or HR director)",
+                placeholder = "e.g. John Miller",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "signatoryName",
+                leadingIcon = Icons.Default.Person
+            )
+
+            HighlightField(
+                value = data.signatoryTitle,
+                onValueChange = { onDataChanged(data.copy(signatoryTitle = it)) },
+                label = "Signatory Title",
+                promptText = "Designation of position of the authorized representative.",
+                placeholder = "e.g. VP of Intellectual Property",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "signatoryTitle",
+                leadingIcon = Icons.Default.Star
+            )
+
+            HighlightField(
+                value = data.offerDetails,
+                onValueChange = { onDataChanged(data.copy(offerDetails = it)) },
+                label = "Additional Offer Details & Benefits",
+                promptText = "Health coverages, equity shares, stock option schedules, remote stipulations, etc.",
+                placeholder = "Describe medical coverages, annual leaves, bonus structures...",
+                highlightIfEmpty = false,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "offerDetails"
+            )
+        }
+    }
+}
+
+@Composable
+fun ResignationLetterForm(
+    data: ResignationLetterData,
+    onDataChanged: (ResignationLetterData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("👋 Resignation Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            HighlightField(
+                value = data.employeeName,
+                onValueChange = { onDataChanged(data.copy(employeeName = it)) },
+                label = "My Full Name",
+                promptText = "Your name as registered on corporate payroll.",
+                placeholder = "e.g. Marcus Wright",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "employeeName",
+                leadingIcon = Icons.Default.Person
+            )
+
+            HighlightField(
+                value = data.managerName,
+                onValueChange = { onDataChanged(data.copy(managerName = it)) },
+                label = "Manager Name / Recipient",
+                promptText = "The full name of your reporting supervisor.",
+                placeholder = "e.g. Dr. Serena Kogan",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "managerName",
+                leadingIcon = Icons.Default.Person
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1.3f)) {
+                    HighlightField(
+                        value = data.companyName,
+                        onValueChange = { onDataChanged(data.copy(companyName = it)) },
+                        label = "Company Name",
+                        promptText = "The company you are resigning from.",
+                        placeholder = "e.g. Skynet Research",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "companyName",
+                        leadingIcon = Icons.Default.Business
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.lastWorkingDay,
+                        onValueChange = { onDataChanged(data.copy(lastWorkingDay = it)) },
+                        label = "Last Working Day",
+                        promptText = "Your final date of employment coverage.",
+                        placeholder = "e.g. June 20, 2026",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "lastWorkingDay",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.resignationReason,
+                onValueChange = { onDataChanged(data.copy(resignationReason = it)) },
+                label = "Primary Reason for Departure",
+                promptText = "Brief indicator of intent. Best kept polite and constructive.",
+                placeholder = "e.g. Pursuing a new, challenging career development path...",
+                highlightIfEmpty = false,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "resignationReason"
+            )
+
+            HighlightField(
+                value = data.personalNote,
+                onValueChange = { onDataChanged(data.copy(personalNote = it)) },
+                label = "Gratitude statement or personal message",
+                promptText = "Thanking colleagues for mentoring opportunities.",
+                placeholder = "e.g. Thank you so much for your mentorship over the past years. I am proud of what the system achieved...",
+                highlightIfEmpty = false,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "personalNote"
+            )
+
+            HighlightField(
+                value = data.signatureName,
+                onValueChange = { onDataChanged(data.copy(signatureName = it)) },
+                label = "Sign-off Signature Block",
+                promptText = "The final name printed at bottom of letter.",
+                placeholder = "e.g. Marcus",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "signatureName",
+                leadingIcon = Icons.Default.Edit
+            )
+        }
+    }
+}
+
+@Composable
+fun ServiceContractForm(
+    data: ServiceContractData,
+    onDataChanged: (ServiceContractData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("🤝 Service Contract / Agreement details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HighlightField(
+                value = data.contractorName,
+                onValueChange = { onDataChanged(data.copy(contractorName = it)) },
+                label = "Service Provider / Contractor Name",
+                promptText = "Individual or agency supplying professional expertise.",
+                placeholder = "e.g. John Connor Consulting",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "contractorName",
+                leadingIcon = Icons.Default.Group
+            )
+
+            HighlightField(
+                value = data.clientName,
+                onValueChange = { onDataChanged(data.copy(clientName = it)) },
+                label = "Client / Contracting Entity Name",
+                promptText = "Customer paying for execution deliverables.",
+                placeholder = "e.g. Resistance Command HQ",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "clientName",
+                leadingIcon = Icons.Default.Person
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.agreementDate,
+                        onValueChange = { onDataChanged(data.copy(agreementDate = it)) },
+                        label = "Agreement Effective Date",
+                        promptText = "Starting date when conditions apply.",
+                        placeholder = "e.g. August 29, 2026",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "agreementDate",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.governingLaw,
+                        onValueChange = { onDataChanged(data.copy(governingLaw = it)) },
+                        label = "Governing Jurisdiction",
+                        promptText = "The legal region settling potential contract disputes.",
+                        placeholder = "e.g. California",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "governingLaw",
+                        leadingIcon = Icons.Default.Lock
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.compensation,
+                onValueChange = { onDataChanged(data.copy(compensation = it)) },
+                label = "Contract Project Budget or Rate",
+                promptText = "Specify flat retainers or billable hours details.",
+                placeholder = "e.g. Fixed lump-sum payment of $45,000",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "compensation",
+                leadingIcon = Icons.Default.AttachMoney
+            )
+
+            HighlightField(
+                value = data.paymentTerms,
+                onValueChange = { onDataChanged(data.copy(paymentTerms = it)) },
+                label = "Invoice / Milestone Payment Terms",
+                promptText = "When should invoice balances be cleared?",
+                placeholder = "e.g. Net 15 days upon milestone submission approval",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "paymentTerms"
+            )
+
+            HighlightField(
+                value = data.scopeOfWork,
+                onValueChange = { onDataChanged(data.copy(scopeOfWork = it)) },
+                label = "Scope of Work Description",
+                promptText = "An exhaustive checklist of specific deliverables to complete.",
+                placeholder = "Identify exact technical tasks, reporting structures, code migrations...",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "scopeOfWork"
+            )
+        }
+    }
+}
+
+@Composable
+fun CertificateForm(
+    data: CertificateData,
+    onDataChanged: (CertificateData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("🏆 Certificate of Achievement Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HighlightField(
+                value = data.recipientName,
+                onValueChange = { onDataChanged(data.copy(recipientName = it)) },
+                label = "Recipient Name",
+                promptText = "The recipient of the certificate.",
+                placeholder = "e.g. Katherine Brewster",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "recipientName",
+                leadingIcon = Icons.Default.Person
+            )
+
+            HighlightField(
+                value = data.achievementTitle,
+                onValueChange = { onDataChanged(data.copy(achievementTitle = it)) },
+                label = "Award/Achievement Title",
+                promptText = "Name of the qualification or achievement milestone.",
+                placeholder = "e.g. Advanced Battlefield Logistics & Defense",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "achievementTitle",
+                leadingIcon = Icons.Default.Star
+            )
+
+            HighlightField(
+                value = data.awardingOrg,
+                onValueChange = { onDataChanged(data.copy(awardingOrg = it)) },
+                label = "Awarding Entity / Company Name",
+                promptText = "The granting institution or enterprise sponsor.",
+                placeholder = "e.g. Division 2 Tactical Logistics Association",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "awardingOrg",
+                leadingIcon = Icons.Default.Business
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.dateOfIssue,
+                        onValueChange = { onDataChanged(data.copy(dateOfIssue = it)) },
+                        label = "Date of Issue",
+                        promptText = "The official validation stamp date.",
+                        placeholder = "e.g. November 28, 2026",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "dateOfIssue",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.authoritySignatory,
+                        onValueChange = { onDataChanged(data.copy(authoritySignatory = it)) },
+                        label = "Authorized Signatory",
+                        promptText = "Full name and title of certifying official.",
+                        placeholder = "e.g. General Robert Brewster, US Air Force",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "authoritySignatory",
+                        leadingIcon = Icons.Default.Edit
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.certificateDescription,
+                onValueChange = { onDataChanged(data.copy(certificateDescription = it)) },
+                label = "Certificate Description Summary",
+                promptText = "Brief body paragraph highlighting the recipient's exceptional accomplishments.",
+                placeholder = "Describe their exemplary participation, technical leadership, and strategic execution skills...",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "certificateDescription"
+            )
+        }
+    }
+}
+
+@Composable
+fun MeetingMinutesForm(
+    data: MeetingMinutesData,
+    onDataChanged: (MeetingMinutesData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    var newActionItem by remember { mutableStateOf("") }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("📝 Meeting Minutes Detail Board", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            HighlightField(
+                value = data.meetingTitle,
+                onValueChange = { onDataChanged(data.copy(meetingTitle = it)) },
+                label = "Meeting Agenda / Title",
+                promptText = "The header subject of discussion.",
+                placeholder = "e.g. Strategic Defense Software Synch",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "meetingTitle",
+                leadingIcon = Icons.Default.Edit
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.meetingDate,
+                        onValueChange = { onDataChanged(data.copy(meetingDate = it)) },
+                        label = "Date & Time",
+                        promptText = "When the session took place.",
+                        placeholder = "e.g. Sept 4, 2026, 14:00 EST",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "meetingDate",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.facilitator,
+                        onValueChange = { onDataChanged(data.copy(facilitator = it)) },
+                        label = "Facilitator / Chair",
+                        promptText = "Who directed proceedings.",
+                        placeholder = "e.g. Lt. Commander Kate Brewster",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "facilitator",
+                        leadingIcon = Icons.Default.Person
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.attendees,
+                onValueChange = { onDataChanged(data.copy(attendees = it)) },
+                label = "Attendees List",
+                promptText = "Comma-delimited full names of participants.",
+                placeholder = "e.g. John C., Katherine B., Marcus W., Serena K.",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "attendees",
+                leadingIcon = Icons.Default.Group
+            )
+
+            HighlightField(
+                value = data.discussionSummary,
+                onValueChange = { onDataChanged(data.copy(discussionSummary = it)) },
+                label = "Core Discussion Summary",
+                promptText = "Key debate nodes, project concerns, strategic updates.",
+                placeholder = "Summarize the primary discussions, technology choices, action roadblocks...",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "discussionSummary"
+            )
+
+            HighlightField(
+                value = data.nextMeetingDate,
+                onValueChange = { onDataChanged(data.copy(nextMeetingDate = it)) },
+                label = "Next Meeting Date target",
+                promptText = "Next tracking session milestone.",
+                placeholder = "e.g. October 1, 2026, 10:00 EST",
+                highlightIfEmpty = false,
+                focusedField = focusedField,
+                fieldName = "nextMeetingDate",
+                leadingIcon = Icons.Default.CalendarToday
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("✅ Action Items Checklist", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = newActionItem,
+                        onValueChange = { newActionItem = it },
+                        label = { Text("New Action Item Task") },
+                        placeholder = { Text("e.g. Review firewall configuration files") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    IconButton(onClick = {
+                        if (newActionItem.isNotBlank()) {
+                            onDataChanged(data.copy(actionItems = data.actionItems + newActionItem))
+                            newActionItem = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.AddCircle, contentDescription = "Add Item")
+                    }
+                }
+            }
+        }
+
+        itemsIndexed(data.actionItems) { index, item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("${index + 1}. $item", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = {
+                    val updated = data.actionItems.toMutableList().apply { removeAt(index) }
+                    onDataChanged(data.copy(actionItems = updated))
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BusinessLetterForm(
+    data: BusinessLetterData,
+    onDataChanged: (BusinessLetterData) -> Unit,
+    focusedField: MutableState<String>,
+    highlightIfEmpty: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text("✉️ General Business Letter details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HighlightField(
+                value = data.senderAddress,
+                onValueChange = { onDataChanged(data.copy(senderAddress = it)) },
+                label = "Sender Contact / Address Block",
+                promptText = "Your name, title, and organization's mailing address.",
+                placeholder = "e.g. John Connor Consulting\n120 Resistance Way, Suite 4\nLos Angeles, CA 90025",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "senderAddress"
+            )
+
+            HighlightField(
+                value = data.recipientAddress,
+                onValueChange = { onDataChanged(data.copy(recipientAddress = it)) },
+                label = "Recipient Mailing Address Block",
+                promptText = "The full receiving organization address.",
+                placeholder = "e.g. Cyberdyne Systems Corp\nAttention: Legal Affairs\n18111 Nordhoff St, Northridge, CA",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "recipientAddress"
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.date,
+                        onValueChange = { onDataChanged(data.copy(date = it)) },
+                        label = "Document Date",
+                        promptText = "Official letter delivery date.",
+                        placeholder = "e.g. August 29, 2026",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "date",
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+                Box(modifier = Modifier.weight(1.2f)) {
+                    HighlightField(
+                        value = data.subject,
+                        onValueChange = { onDataChanged(data.copy(subject = it)) },
+                        label = "Subject Line",
+                        promptText = "Indicator of letter's contents.",
+                        placeholder = "e.g. NOTICE OF INTENT TO TERMINATE DATA INTEGRATION",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "subject",
+                        leadingIcon = Icons.Default.Info
+                    )
+                }
+            }
+
+            HighlightField(
+                value = data.salutation,
+                onValueChange = { onDataChanged(data.copy(salutation = it)) },
+                label = "Salutation Greeting",
+                promptText = "Polite greeting to open the text.",
+                placeholder = "e.g. Dear Sir or Madam,",
+                highlightIfEmpty = highlightIfEmpty,
+                focusedField = focusedField,
+                fieldName = "salutation",
+                leadingIcon = Icons.Default.Edit
+            )
+
+            HighlightField(
+                value = data.paragraph1,
+                onValueChange = { onDataChanged(data.copy(paragraph1 = it)) },
+                label = "Introduction Paragraph 1",
+                promptText = "State the main purpose of your letter immediately.",
+                placeholder = "Writing to formally notify you regarding...",
+                highlightIfEmpty = highlightIfEmpty,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "paragraph1"
+            )
+
+            HighlightField(
+                value = data.paragraph2,
+                onValueChange = { onDataChanged(data.copy(paragraph2 = it)) },
+                label = "Detail Body Paragraph 2",
+                promptText = "Elaborate with specific legal, financial, or engineering detail blocks.",
+                placeholder = "Over consecutive iterations, our tech stack detected...",
+                highlightIfEmpty = false,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "paragraph2"
+            )
+
+            HighlightField(
+                value = data.paragraph3,
+                onValueChange = { onDataChanged(data.copy(paragraph3 = it)) },
+                label = "Conclusion Paragraph 3 & Call to action",
+                promptText = "A final wrap-up statement indicating required next steps.",
+                placeholder = "Kindly respond within Net 15 business days to clear the query...",
+                highlightIfEmpty = false,
+                isMultiline = true,
+                focusedField = focusedField,
+                fieldName = "paragraph3"
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightField(
+                        value = data.valediction,
+                        onValueChange = { onDataChanged(data.copy(valediction = it)) },
+                        label = "Closing Valediction",
+                        promptText = "Standard formal closing phrase.",
+                        placeholder = "e.g. Respectfully yours,",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "valediction",
+                        leadingIcon = Icons.Default.Edit
+                    )
+                }
+                Box(modifier = Modifier.weight(1.2f)) {
+                    HighlightField(
+                        value = data.senderName,
+                        onValueChange = { onDataChanged(data.copy(senderName = it)) },
+                        label = "Sender Printed Name",
+                        promptText = "Your name for the signature line.",
+                        placeholder = "e.g. John Connor",
+                        highlightIfEmpty = highlightIfEmpty,
+                        focusedField = focusedField,
+                        fieldName = "senderName",
+                        leadingIcon = Icons.Default.Person
+                    )
+                }
+            }
+        }
+    }
+}
+

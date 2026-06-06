@@ -854,8 +854,500 @@ ${data.signatureLinkedIn.ifBlank { "[LinkedIn]" }}
     }
 
     // ==========================================
+    // 6. OFFER LETTER EXPORTERS
+    // ==========================================
+    fun generateOfferLetterTxt(data: OfferLetterData): String {
+        return """
+            OFFER OF EMPLOYMENT
+            Start Date: ${data.startDate}
+            
+            Company: ${data.companyName}
+            To: ${data.candidateName}
+            
+            Dear ${data.candidateName},
+            
+            We are pleased to offer you the position of ${data.jobTitle} starting on ${data.startDate}.
+            
+            Compensation and Benefits:
+            - Salary: ${data.salary}
+            
+            Duties and Details:
+            ${data.offerDetails}
+            
+            We are excited about the prospect of you joining our team. Please sign below to acknowledge acceptance of this offer.
+            
+            Sincerely,
+            ${data.signatoryName}
+            ${data.signatoryTitle}
+            ${data.companyName}
+        """.trimIndent()
+    }
+
+    fun generateOfferLetterPdf(context: Context, data: OfferLetterData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(33, 150, 243); textSize = 20f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(25, 118, 210); textSize = 13f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 60f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        canvas.drawText("OFFER OF EMPLOYMENT", marginX, y, paintTitle)
+        y += 24f
+        canvas.drawText("Start Date: ${data.startDate}", marginX, y, paintText)
+        y += 24f
+
+        canvas.drawLine(marginX, y, marginX + contentWidth, y, Paint().apply { color = Color.GRAY; strokeWidth = 1f })
+        y += 20f
+
+        val candName = if (data.candidateName.isBlank()) "[Candidate Name]" else data.candidateName
+        val compName = if (data.companyName.isBlank()) "[Company Name]" else data.companyName
+        val jobT = if (data.jobTitle.isBlank()) "[Job Title]" else data.jobTitle
+
+        y = drawWrappedText(canvas, "Dear $candName,", marginX, y, contentWidth, paintText)
+        y += 12f
+        y = drawWrappedText(canvas, "On behalf of $compName, we are pleased to offer you the position of $jobT starting on ${data.startDate}.", marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Salary & Compensation", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.salary.isBlank()) "[Salary Details]" else data.salary, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Offer Details & Duties", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.offerDetails.isBlank()) "[Offer Details]" else data.offerDetails, marginX, y, contentWidth, paintText)
+        y += 30f
+
+        y = drawWrappedText(canvas, "Sincerely,", marginX, y, contentWidth, paintText)
+        y += 25f
+        y = drawWrappedText(canvas, if (data.signatoryName.isBlank()) "[Signatory Name]" else data.signatoryName, marginX, y, contentWidth, paintText)
+        y = drawWrappedText(canvas, "${data.signatoryTitle} | $compName", marginX, y, contentWidth, paintText)
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "offer_letter.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
+    // 7. RESIGNATION LETTER EXPORTERS
+    // ==========================================
+    fun generateResignationLetterTxt(data: ResignationLetterData): String {
+        return """
+            RESIGNATION NOTICE
+            Date: ${data.lastWorkingDay}
+            
+            To: ${data.managerName}
+            Company: ${data.companyName}
+            
+            Dear ${data.managerName},
+            
+            Please accept this letter as formal notification that I am resigning from my position. My last working day will be ${data.lastWorkingDay}.
+            
+            Reason for Resignation:
+            ${data.resignationReason}
+            
+            Personal Note & Gratitude:
+            ${data.personalNote}
+            
+            I wish the company continued success in the future.
+            
+            Sincerely,
+            ${data.employeeName}
+            ${data.signatureName}
+        """.trimIndent()
+    }
+
+    fun generateResignationLetterPdf(context: Context, data: ResignationLetterData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(244, 67, 54); textSize = 20f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(198, 40, 40); textSize = 13f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 60f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        canvas.drawText("RESIGNATION LETTER", marginX, y, paintTitle)
+        y += 24f
+        canvas.drawText("Target Effective Date: ${data.lastWorkingDay}", marginX, y, paintText)
+        y += 24f
+
+        canvas.drawLine(marginX, y, marginX + contentWidth, y, Paint().apply { color = Color.GRAY; strokeWidth = 1f })
+        y += 20f
+
+        val mgr = if (data.managerName.isBlank()) "[Manager Name]" else data.managerName
+        val comp = if (data.companyName.isBlank()) "[Company Name]" else data.companyName
+
+        y = drawWrappedText(canvas, "Dear $mgr,", marginX, y, contentWidth, paintText)
+        y += 12f
+        y = drawWrappedText(canvas, "Please accept this letter as formal notification that I am resigning from my position at $comp. My target last working day will be ${data.lastWorkingDay}.", marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Reason for Departure", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.resignationReason.isBlank()) "[Resignation Reason]" else data.resignationReason, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Gratitude & Closing Note", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.personalNote.isBlank()) "[Personal Note / Gratitude]" else data.personalNote, marginX, y, contentWidth, paintText)
+        y += 30f
+
+        y = drawWrappedText(canvas, "Sincerely,", marginX, y, contentWidth, paintText)
+        y += 25f
+        y = drawWrappedText(canvas, if (data.employeeName.isBlank()) "[Employee Name]" else data.employeeName, marginX, y, contentWidth, paintText)
+        if (data.signatureName.isNotBlank() && data.signatureName != data.employeeName) {
+            y = drawWrappedText(canvas, "Signature: ${data.signatureName}", marginX, y, contentWidth, paintText)
+        }
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "resignation_letter.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
+    // 8. SERVICE CONTRACT EXPORTERS
+    // ==========================================
+    fun generateServiceContractTxt(data: ServiceContractData): String {
+        return """
+            SERVICE CONTRACT / AGREEMENT
+            Date of Agreement: ${data.agreementDate}
+            
+            PARTIES:
+            - Contractor: ${data.contractorName}
+            - Client: ${data.clientName}
+            
+            1. SCOPE OF SERVICES:
+            ${data.scopeOfWork}
+            
+            2. PAYMENT AND COMPENSATION TYPE:
+            ${data.paymentTerms} (${data.compensation})
+            
+            3. GOVERNING LAW:
+            This Agreement shall be structured under the rules of ${data.governingLaw}.
+            
+            Contractor: ${data.contractorName}
+            Client: ${data.clientName}
+        """.trimIndent()
+    }
+
+    fun generateServiceContractPdf(context: Context, data: ServiceContractData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(63, 81, 181); textSize = 20f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(48, 63, 159); textSize = 13f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 60f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        canvas.drawText("SERVICE AGREEMENT", marginX, y, paintTitle)
+        y += 20f
+        canvas.drawText("Agreement Date: ${data.agreementDate}", marginX, y, paintText)
+        y += 24f
+
+        canvas.drawLine(marginX, y, marginX + contentWidth, y, Paint().apply { color = Color.GRAY; strokeWidth = 1f })
+        y += 20f
+
+        val contractor = if (data.contractorName.isBlank()) "[Contractor Name]" else data.contractorName
+        val client = if (data.clientName.isBlank()) "[Client Name]" else data.clientName
+
+        y = drawWrappedText(canvas, "This Professional Service Agreement is entered into by Contractor $contractor and Client $client.", marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("1. Scope of Work", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.scopeOfWork.isBlank()) "[Scope of Work / Deliverables]" else data.scopeOfWork, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("2. Payment Terms & Compensation", marginX, y, paintHeader)
+        y += 14f
+        val payTerms = if (data.paymentTerms.isBlank()) "[Payment Terms]" else data.paymentTerms
+        val compensationVal = if (data.compensation.isBlank()) "" else " (${data.compensation})"
+        y = drawWrappedText(canvas, "$payTerms$compensationVal", marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("3. Governing Law", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, "This entire service arrangement shall be construed under the laws of ${data.governingLaw}.", marginX, y, contentWidth, paintText)
+        y += 30f
+
+        canvas.drawText("Signed in Agreement:", marginX, y, paintHeader)
+        y += 20f
+        canvas.drawText("Contractor: $contractor", marginX, y, paintText)
+        canvas.drawText("Client Signatory: $client", marginX + 220f, y, paintText)
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "service_contract.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
+    // 9. CERTIFICATE EXPORTERS
+    // ==========================================
+    fun generateCertificateTxt(data: CertificateData): String {
+        val desc = if (data.certificateDescription.isBlank()) "[Certificate Description]" else data.certificateDescription
+        val awarding = if (data.awardingOrg.isBlank()) "[Awarding Organization]" else data.awardingOrg
+        val recipient = if (data.recipientName.isBlank()) "[Recipient Name]" else data.recipientName
+        val title = if (data.achievementTitle.isBlank()) "[Achievement Title]" else data.achievementTitle
+        val signatory = if (data.authoritySignatory.isBlank()) "[Authority Signatory]" else data.authoritySignatory
+
+        return """
+            CERTIFICATE OF ACHIEVEMENT
+            
+            This is to certify that
+            $recipient
+            
+            has successfully completed the requirements for
+            $title
+            
+            Description:
+            $desc
+            
+            Awarded by:
+            $awarding
+            
+            Date of Issue: ${data.dateOfIssue}
+            Authorized Signatory: $signatory
+        """.trimIndent()
+    }
+
+    fun generateCertificatePdf(context: Context, data: CertificateData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(255, 193, 7); textSize = 24f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(255, 111, 0); textSize = 14f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 100f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        // Let's add a neat certificate frame on the canvas!
+        canvas.drawRect(20f, 20f, 575f, 822f, Paint().apply { color = Color.rgb(255, 160, 0); strokeWidth = 4f; style = Paint.Style.STROKE })
+        canvas.drawRect(25f, 25f, 570f, 817f, Paint().apply { color = Color.rgb(255, 236, 179); strokeWidth = 1f; style = Paint.Style.STROKE })
+
+        canvas.drawText("CERTIFICATE OF COMPLETION", marginX + 60f, y, paintTitle)
+        y += 40f
+
+        y = drawWrappedText(canvas, "This certificate is proudly awarded to:", marginX + 110f, y, contentWidth, paintText)
+        y += 24f
+
+        canvas.drawText(if (data.recipientName.isBlank()) "[Recipient Full Name]" else data.recipientName, marginX + 120f, y, paintHeader)
+        y += 30f
+
+        y = drawWrappedText(canvas, "In recognition of successful achievement in master level skills of:", marginX + 60f, y, contentWidth, paintText)
+        y += 16f
+        y = drawWrappedText(canvas, if (data.achievementTitle.isBlank()) "[Achievement Title]" else data.achievementTitle, marginX + 80f, y, contentWidth - 80f, paintText)
+        y += 20f
+
+        val certificateDesc = if (data.certificateDescription.isBlank()) "[Achievement Details / Scope]" else data.certificateDescription
+        y = drawWrappedText(canvas, certificateDesc, marginX + 60f, y, contentWidth - 120f, paintText)
+        y += 40f
+
+        canvas.drawText("Granted By: ${if (data.awardingOrg.isBlank()) "[Awarding Organization]" else data.awardingOrg}", marginX + 60f, y, paintText)
+        y += 24f
+        canvas.drawText("Date: ${data.dateOfIssue}", marginX + 60f, y, paintText)
+        canvas.drawText("Signatory: ${if (data.authoritySignatory.isBlank()) "[Authority Signatory]" else data.authoritySignatory}", marginX + 280f, y - 24f, paintText)
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "certificate.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
+    // 10. MEETING MINUTES EXPORTERS
+    // ==========================================
+    fun generateMeetingMinutesTxt(data: MeetingMinutesData): String {
+        return """
+            MEETING MINUTES
+            Title: ${data.meetingTitle}
+            Date: ${data.meetingDate}
+            Facilitator: ${data.facilitator}
+            
+            ATTENDEES:
+            ${data.attendees}
+            
+            DISCUSSIONS AND DECISIONS:
+            ${data.discussionSummary}
+            
+            ACTION ITEMS:
+            ${data.actionItems.joinToString("\n") { "• [ ] $it" }}
+        """.trimIndent()
+    }
+
+    fun generateMeetingMinutesPdf(context: Context, data: MeetingMinutesData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(0, 150, 136); textSize = 20f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(0, 77, 64); textSize = 13f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 60f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        canvas.drawText("MEETING MINUTES", marginX, y, paintTitle)
+        y += 20f
+        canvas.drawText("Title: ${data.meetingTitle}", marginX, y, paintText)
+        y += 14f
+        canvas.drawText("Date: ${data.meetingDate} | Fac: ${data.facilitator}", marginX, y, paintText)
+        y += 24f
+
+        canvas.drawLine(marginX, y, marginX + contentWidth, y, Paint().apply { color = Color.GRAY; strokeWidth = 1f })
+        y += 20f
+
+        canvas.drawText("Attendees:", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.attendees.isBlank()) "[No Attendees Specified]" else data.attendees, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Summary of Discussions:", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.discussionSummary.isBlank()) "[No Discussion Notes Written]" else data.discussionSummary, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        if (data.actionItems.isNotEmpty()) {
+            canvas.drawText("Committed Action Items:", marginX, y, paintHeader)
+            y += 14f
+            data.actionItems.forEach {
+                val text = "• [  ]  $it"
+                y = drawWrappedText(canvas, text, marginX, y, contentWidth, paintText)
+            }
+        }
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "meeting_minutes.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
+    // 11. BUSINESS LETTER EXPORTERS
+    // ==========================================
+    fun generateBusinessLetterTxt(data: BusinessLetterData): String {
+        return """
+            BUSINESS LETTER
+            Date: ${data.date}
+            Subject: ${data.subject}
+            
+            SENDER DETAILS:
+            ${data.senderName}
+            ${data.senderAddress}
+            
+            RECIPIENT DETAILS:
+            ${data.recipientAddress}
+            
+            ${data.salutation}
+            
+            ${data.paragraph1}
+            
+            ${data.paragraph2}
+            
+            ${data.paragraph3}
+            
+            ${data.valediction}
+            ${data.senderName}
+        """.trimIndent()
+    }
+
+    fun generateBusinessLetterPdf(context: Context, data: BusinessLetterData): File {
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val paintText = Paint().apply { color = Color.BLACK; textSize = 11f; isAntiAlias = true }
+        val paintTitle = Paint().apply { color = Color.rgb(121, 85, 72); textSize = 20f; isFakeBoldText = true; isAntiAlias = true }
+        val paintHeader = Paint().apply { color = Color.rgb(93, 64, 55); textSize = 13f; isFakeBoldText = true; isAntiAlias = true }
+
+        var y = 60f
+        val marginX = 45f
+        val contentWidth = 595f - 90f
+
+        canvas.drawText("BUSINESS LETTER", marginX, y, paintTitle)
+        y += 20f
+        canvas.drawText("Date: ${data.date}", marginX, y, paintText)
+        y += 24f
+
+        canvas.drawLine(marginX, y, marginX + contentWidth, y, Paint().apply { color = Color.GRAY; strokeWidth = 1f })
+        y += 20f
+
+        canvas.drawText("Sender Details:", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.senderName.isBlank()) "[Sender Name]" else data.senderName, marginX, y, contentWidth, paintText)
+        y = drawWrappedText(canvas, if (data.senderAddress.isBlank()) "[Sender Address]" else data.senderAddress, marginX, y, contentWidth, paintText)
+        y += 18f
+
+        canvas.drawText("Recipient Details:", marginX, y, paintHeader)
+        y += 14f
+        y = drawWrappedText(canvas, if (data.recipientAddress.isBlank()) "[Recipient Address]" else data.recipientAddress, marginX, y, contentWidth, paintText)
+        y += 20f
+
+        canvas.drawText("Subject: ${data.subject}", marginX, y, paintHeader)
+        y += 20f
+
+        y = drawWrappedText(canvas, data.salutation, marginX, y, contentWidth, paintText)
+        y += 12f
+
+        if (data.paragraph1.isNotBlank()) {
+            y = drawWrappedText(canvas, data.paragraph1, marginX, y, contentWidth, paintText)
+            y += 12f
+        }
+        if (data.paragraph2.isNotBlank()) {
+            y = drawWrappedText(canvas, data.paragraph2, marginX, y, contentWidth, paintText)
+            y += 12f
+        }
+        if (data.paragraph3.isNotBlank()) {
+            y = drawWrappedText(canvas, data.paragraph3, marginX, y, contentWidth, paintText)
+            y += 12f
+        }
+
+        y = drawWrappedText(canvas, data.valediction, marginX, y, contentWidth, paintText)
+        y += 25f
+        y = drawWrappedText(canvas, if (data.senderName.isBlank()) "[Sender Name]" else data.senderName, marginX, y, contentWidth, paintText)
+
+        pdfDocument.finishPage(page)
+        val file = File(context.cacheDir, "business_letter.pdf")
+        pdfDocument.writeTo(FileOutputStream(file))
+        pdfDocument.close()
+        return file
+    }
+
+    // ==========================================
     // SYSTEM AND EXPORT PLUMBING
     // ==========================================
+    var isEmailOverride: Boolean = false
+
     fun shareFile(context: Context, file: File, mimeType: String) {
         val uri = FileProvider.getUriForFile(
             context,
@@ -863,11 +1355,34 @@ ${data.signatureLinkedIn.ifBlank { "[LinkedIn]" }}
             file
         )
         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = mimeType
+            if (isEmailOverride) {
+                type = "message/rfc822" // direct mail selector
+                putExtra(android.content.Intent.EXTRA_SUBJECT, "Nexturn Document Export - ${file.name.replace("_", " ").replace(".pdf", "").replace(".txt", "").uppercase()}")
+                putExtra(android.content.Intent.EXTRA_TEXT, "Hello,\n\nPlease find the attached document '${file.name}' generated via your Nexturn Workspace.\n\nBest regards.")
+            } else {
+                type = mimeType
+            }
             putExtra(android.content.Intent.EXTRA_STREAM, uri)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(android.content.Intent.createChooser(intent, "Share Document via:"))
+        val chooserTitle = if (isEmailOverride) "Send Email via:" else "Share Document via:"
+        context.startActivity(android.content.Intent.createChooser(intent, chooserTitle))
+    }
+
+    fun sendEmailWithAttachment(context: Context, file: File, mimeType: String, subject: String = "Nexturn Document Export") {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "message/rfc822" // standard mail RFC format
+            putExtra(android.content.Intent.EXTRA_STREAM, uri)
+            putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+            putExtra(android.content.Intent.EXTRA_TEXT, "Hello,\n\nPlease find the attached document '${file.name}' generated via Nexturn Workspace.\n\nBest regards.")
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "Send Email via:"))
     }
 
     fun printPdf(context: Context, pdfFile: File) {
