@@ -2,6 +2,7 @@ package com.example.ui
 
 import android.widget.Toast
 import androidx.compose.animation.*
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -112,6 +113,17 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
         else -> 1.0f
     }
 
+    val customFontFamilyState by viewModel.customFontFamily.collectAsStateWithLifecycle()
+    val isFontBoldState by viewModel.isFontBold.collectAsStateWithLifecycle()
+    val isFontItalicState by viewModel.isFontItalic.collectAsStateWithLifecycle()
+    val customFontSizeOffsetState by viewModel.customFontSizeOffset.collectAsStateWithLifecycle()
+    val customPaperColorHexState by viewModel.customPaperColorHex.collectAsStateWithLifecycle()
+    val documentCornerRadiusState by viewModel.documentCornerRadius.collectAsStateWithLifecycle()
+    val hasBorderOutlineState by viewModel.hasBorderOutline.collectAsStateWithLifecycle()
+    val borderThicknessDpState by viewModel.borderThicknessDp.collectAsStateWithLifecycle()
+    val watermarkSymbolState by viewModel.watermarkSymbol.collectAsStateWithLifecycle()
+    val isProStudioEnabledState by viewModel.isProStudioEnabled.collectAsStateWithLifecycle()
+
     val styleConfig = DocumentStyleConfig(
         useWatermark = useWatermarkState,
         watermarkText = watermarkTextState,
@@ -120,7 +132,17 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
         signatureText = signatureTextState,
         signatureStyle = signatureStyleState,
         signatureBitmapBase64 = signatureBitmapState,
-        spacingMultiplier = spacingMultiplier
+        spacingMultiplier = spacingMultiplier,
+        customFontFamily = customFontFamilyState,
+        isFontBold = isFontBoldState,
+        isFontItalic = isFontItalicState,
+        customFontSizeOffset = customFontSizeOffsetState,
+        customPaperColorHex = customPaperColorHexState,
+        documentCornerRadius = documentCornerRadiusState,
+        hasBorderOutline = hasBorderOutlineState,
+        borderThicknessDp = borderThicknessDpState,
+        watermarkSymbol = watermarkSymbolState,
+        isProStudioEnabled = isProStudioEnabledState
     )
 
     // Required fields check helper
@@ -154,165 +176,133 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
         
         val performAction = {
             try {
-                when (selectedTab) {
-                    0 -> { // CV
+                val mimeType = if (format == "TXT") "text/plain" else "application/pdf"
+                val file: java.io.File = when (selectedTab) {
+                    0 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateCvTxt(cvData)
-                            val file = DocExporter.writeTextToFile(context, txt, "cv_resume.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "cv_resume.txt")
                         } else {
-                            val file = DocExporter.generateCvPdf(context, cvData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateCvPdf(context, cvData)
                         }
                     }
-                    1 -> { // Cover Letter
+                    1 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateCoverLetterTxt(coverLetterData)
-                            val file = DocExporter.writeTextToFile(context, txt, "cover_letter.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "cover_letter.txt")
                         } else {
-                            val file = DocExporter.generateCoverLetterPdf(context, coverLetterData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateCoverLetterPdf(context, coverLetterData)
                         }
                     }
-                    2 -> { // Email
+                    2 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateEmailTxt(emailData)
-                            val file = DocExporter.writeTextToFile(context, txt, "email.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "email.txt")
                         } else {
-                            val file = DocExporter.generateEmailPdf(context, emailData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateEmailPdf(context, emailData)
                         }
                     }
-                    3 -> { // Invoice
+                    3 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateInvoiceTxt(invoiceData)
-                            val file = DocExporter.writeTextToFile(context, txt, "invoice.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "invoice.txt")
                         } else {
-                            val file = DocExporter.generateInvoicePdf(context, invoiceData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateInvoicePdf(context, invoiceData)
                         }
                     }
-                    4 -> { // Proposal
+                    4 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateProposalTxt(proposalData)
-                            val file = DocExporter.writeTextToFile(context, txt, "project_proposal.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "project_proposal.txt")
                         } else {
-                            val file = DocExporter.generateProposalPdf(context, proposalData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateProposalPdf(context, proposalData)
                         }
                     }
-                    5 -> { // Offer Letter
+                    5 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateOfferLetterTxt(offerLetterData)
-                            val file = DocExporter.writeTextToFile(context, txt, "offer_letter.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "offer_letter.txt")
                         } else {
-                            val file = DocExporter.generateOfferLetterPdf(context, offerLetterData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateOfferLetterPdf(context, offerLetterData)
                         }
                     }
-                    6 -> { // Resignation Letter
+                    6 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateResignationLetterTxt(resignationLetterData)
-                            val file = DocExporter.writeTextToFile(context, txt, "resignation_letter.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "resignation_letter.txt")
                         } else {
-                            val file = DocExporter.generateResignationLetterPdf(context, resignationLetterData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateResignationLetterPdf(context, resignationLetterData)
                         }
                     }
-                    7 -> { // Service Contract
+                    7 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateServiceContractTxt(serviceContractData)
-                            val file = DocExporter.writeTextToFile(context, txt, "service_contract.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "service_contract.txt")
                         } else {
-                            val file = DocExporter.generateServiceContractPdf(context, serviceContractData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateServiceContractPdf(context, serviceContractData)
                         }
                     }
-                    8 -> { // Certificate
+                    8 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateCertificateTxt(certificateData)
-                            val file = DocExporter.writeTextToFile(context, txt, "certificate_of_achievement.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "certificate_of_achievement.txt")
                         } else {
-                            val file = DocExporter.generateCertificatePdf(context, certificateData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateCertificatePdf(context, certificateData)
                         }
                     }
-                    9 -> { // Meeting Minutes
+                    9 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateMeetingMinutesTxt(meetingMinutesData)
-                            val file = DocExporter.writeTextToFile(context, txt, "meeting_minutes.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "meeting_minutes.txt")
                         } else {
-                            val file = DocExporter.generateMeetingMinutesPdf(context, meetingMinutesData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateMeetingMinutesPdf(context, meetingMinutesData)
                         }
                     }
-                    10 -> { // Business Letter
+                    10 -> {
                         if (format == "TXT") {
                             val txt = DocExporter.generateBusinessLetterTxt(businessLetterData)
-                            val file = DocExporter.writeTextToFile(context, txt, "business_letter.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "business_letter.txt")
                         } else {
-                            val file = DocExporter.generateBusinessLetterPdf(context, businessLetterData)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateBusinessLetterPdf(context, businessLetterData)
                         }
                     }
                     else -> {
                         val json = viewModel.activeDynamicJsons.value[selectedTab] ?: ""
                         if (format == "TXT") {
                             val txt = DocExporter.generateDynamicTxt(selectedTab, json)
-                            val file = DocExporter.writeTextToFile(context, txt, "dynamic_doc.txt")
-                            if (actionType == "share") DocExporter.shareFile(context, file, "text/plain")
-                            else Toast.makeText(context, "Saved TXT to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.writeTextToFile(context, txt, "dynamic_doc.txt")
                         } else {
-                            val file = DocExporter.generateDynamicPdf(context, selectedTab, json)
-                            if (actionType == "print") DocExporter.printPdf(context, file)
-                            else if (actionType == "share") DocExporter.shareFile(context, file, "application/pdf")
-                            else Toast.makeText(context, "Saved PDF to cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            DocExporter.generateDynamicPdf(context, selectedTab, json)
                         }
                     }
                 }
+
+                when (actionType) {
+                    "print" -> {
+                        DocExporter.printPdf(context, file)
+                    }
+                    "share" -> {
+                        DocExporter.shareFile(context, file, mimeType)
+                    }
+                    "download" -> {
+                        val exportedFile = DocExporter.exportToPublicDownloads(context, file, mimeType)
+                        if (exportedFile != null) {
+                            Toast.makeText(context, "Exported directly to Phone Downloads: ${exportedFile.name} 💾", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "Saved to App cache: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    else -> {
+                        Toast.makeText(context, "Exported to app storage: ${file.name}", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                // Real-time Push Notification dispatch when exporting template completes
+                com.example.util.SystemNotificationManager.dispatchNotification(
+                    context,
+                    "Document Export Completed! 📝",
+                    "Success! Exported ${file.name} to ${if (actionType == "download") "Phone Downloads folder" else actionType} successfully!"
+                )
             } catch (e: Exception) {
                 Toast.makeText(context, "Offline export error: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -424,7 +414,7 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                         title = {
                             Column {
                                 Text("Nexturn Workspace", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                Text("Real-Time Zero-Data Clean Templates Room", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                                Text("Aesthetic Document Design Studio", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -1296,6 +1286,9 @@ fun DashboardDrawerContent(
 
     val activeCv by viewModel.activeCv.collectAsStateWithLifecycle()
 
+    var themeSearchQuery by remember { mutableStateOf("") }
+    var isSearchExpanded by remember { mutableStateOf(false) }
+
     val useSignatureState by viewModel.useSignature.collectAsStateWithLifecycle()
     val signatureTextState by viewModel.signatureText.collectAsStateWithLifecycle()
     val signatureStyleState by viewModel.signatureStyle.collectAsStateWithLifecycle()
@@ -1316,6 +1309,17 @@ fun DashboardDrawerContent(
     }
 
     val universalSizeState by viewModel.universalSizeIndex.collectAsStateWithLifecycle()
+
+    // Pro styling state flows
+    val customFontFamilyState by viewModel.customFontFamily.collectAsStateWithLifecycle()
+    val isFontBoldState by viewModel.isFontBold.collectAsStateWithLifecycle()
+    val isFontItalicState by viewModel.isFontItalic.collectAsStateWithLifecycle()
+    val customFontSizeOffsetState by viewModel.customFontSizeOffset.collectAsStateWithLifecycle()
+    val customPaperColorHexState by viewModel.customPaperColorHex.collectAsStateWithLifecycle()
+    val documentCornerRadiusState by viewModel.documentCornerRadius.collectAsStateWithLifecycle()
+    val hasBorderOutlineState by viewModel.hasBorderOutline.collectAsStateWithLifecycle()
+    val borderThicknessDpState by viewModel.borderThicknessDp.collectAsStateWithLifecycle()
+    val watermarkSymbolState by viewModel.watermarkSymbol.collectAsStateWithLifecycle()
 
     // Collect all template flows inside the drawer dynamically matching MVVM
     val cvTemplates by viewModel.savedCvTemplates.collectAsStateWithLifecycle()
@@ -1439,7 +1443,7 @@ fun DashboardDrawerContent(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-            // SECTION 1: Active Document Type Selector
+            // SECTION 1: Active Document Type Selector with Search Filter
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
@@ -1451,6 +1455,44 @@ fun DashboardDrawerContent(
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
+
+            var docTypeSearchQuery by remember { mutableStateOf("") }
+
+            OutlinedTextField(
+                value = docTypeSearchQuery,
+                onValueChange = { docTypeSearchQuery = it },
+                placeholder = { Text("Search 47 document templates...", style = MaterialTheme.typography.bodySmall) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                textStyle = MaterialTheme.typography.bodySmall,
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingIcon = {
+                    if (docTypeSearchQuery.isNotEmpty()) {
+                        IconButton(onClick = { docTypeSearchQuery = "" }, modifier = Modifier.size(24.dp)) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             val docTypes = listOf(
                 Triple(0, "CV / Resume", Icons.Default.AccountBox),
@@ -1472,14 +1514,49 @@ fun DashboardDrawerContent(
                 Triple(16, "Expense Report", Icons.Default.AttachMoney),
                 Triple(17, "Press Release", Icons.Default.Campaign),
                 Triple(18, "Memo (Internal)", Icons.Default.Message),
-                Triple(19, "Thank-You Letter", Icons.Default.ThumbUp),
+                Triple(19, "Thank-You Letter / Card", Icons.Default.ThumbUp),
                 Triple(20, "Acceptance Letter", Icons.Default.TaskAlt),
                 Triple(21, "Termination Letter", Icons.Default.Cancel),
                 Triple(22, "Performance Review", Icons.Default.TrendingUp),
-                Triple(23, "Custom Layout", Icons.Default.Build)
+                Triple(23, "Love Letter", Icons.Default.Favorite),
+                Triple(24, "Event Invitation", Icons.Default.Email),
+                Triple(25, "Apology Letter", Icons.Default.SentimentVeryDissatisfied),
+                Triple(26, "Condolence & Sympathy Letter", Icons.Default.HeartBroken),
+                Triple(27, "Congratulations Letter", Icons.Default.CardMembership),
+                Triple(28, "Poem & Short Story", Icons.Default.AutoStories),
+                Triple(29, "Personal Journal", Icons.Default.Book),
+                Triple(30, "My To-Do List", Icons.Default.CheckCircle),
+                Triple(31, "Shopping Checklist", Icons.Default.LocalMall),
+                Triple(32, "Aesthetic Recipe Card", Icons.Default.Restaurant),
+                Triple(33, "Official RSVP Response", Icons.Default.Check),
+                Triple(34, "Public Petition", Icons.Default.Gavel),
+                Triple(35, "Formal Complaint Letter", Icons.Default.Report),
+                Triple(36, "Recommendation Request", Icons.Default.ContactPage),
+                Triple(37, "Resignation Acceptance", Icons.Default.HowToReg),
+                Triple(38, "Formal Warning Ticket", Icons.Default.Warning),
+                Triple(39, "Certificate of Appreciation", Icons.Default.WorkspacePremium),
+                Triple(40, "Text Flyer / Program Details", Icons.Default.Announcement),
+                Triple(41, "Last Will & Testament", Icons.Default.HistoryEdu),
+                Triple(42, "Rental & Lease Agreement", Icons.Default.HomeWork),
+                Triple(43, "Simple Bill of Sale", Icons.Default.Handshake),
+                Triple(44, "Promissory Note", Icons.Default.MonetizationOn),
+                Triple(45, "Business Report Summary", Icons.Default.PieChart),
+                Triple(46, "Custom Layout", Icons.Default.Build)
             )
 
-            docTypes.forEach { (index, title, icon) ->
+            val filteredDocTypes = docTypes.filter {
+                it.second.contains(docTypeSearchQuery, ignoreCase = true)
+            }
+
+            if (filteredDocTypes.isEmpty()) {
+                Text(
+                    text = "No matching templates found.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)
+                )
+            } else {
+                filteredDocTypes.forEach { (index, title, icon) ->
                 val isSelected = selectedTab == index
                 Row(
                     modifier = Modifier
@@ -1516,6 +1593,7 @@ fun DashboardDrawerContent(
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
                 }
+            }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
@@ -1749,7 +1827,7 @@ fun DashboardDrawerContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
@@ -1760,55 +1838,105 @@ fun DashboardDrawerContent(
                         )
                     }
 
-                    // Theme Light/Dark switch
-                    Switch(
-                        checked = isDark,
-                        onCheckedChange = { viewModel.toggleThemeMode() },
-                        thumbContent = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { isSearchExpanded = !isSearchExpanded },
+                            modifier = Modifier.size(32.dp)
+                        ) {
                             Icon(
-                                imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp)
+                                imageVector = if (isSearchExpanded) Icons.Default.Close else Icons.Default.Search,
+                                contentDescription = "Search Themes",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
                             )
+                        }
+
+                        // Theme Light/Dark switch
+                        Switch(
+                            checked = isDark,
+                            onCheckedChange = { viewModel.toggleThemeMode() },
+                            thumbContent = {
+                                Icon(
+                                    imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            modifier = Modifier.padding(end = 4.dp).scale(0.8f)
+                        )
+                    }
+                }
+
+                if (isSearchExpanded) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = themeSearchQuery,
+                        onValueChange = { themeSearchQuery = it },
+                        placeholder = { Text("Search themes/papers...", fontSize = 11.sp) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(14.dp)) },
+                        trailingIcon = {
+                            if (themeSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { themeSearchQuery = "" }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear", modifier = Modifier.size(14.dp))
+                                }
+                            }
                         },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        modifier = Modifier.padding(end = 4.dp)
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        shape = RoundedCornerShape(8.dp)
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Vertical column list of themes for easy sidebar clicking
-                themes.forEachIndexed { index, (name, emoji, color) ->
-                    val isSelected = selectedThemeIndex == index
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                            .background(
-                                if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent,
-                                RoundedCornerShape(8.dp)
+                // Filtered column list of themes for easy sidebar clicking
+                val filteredThemes = themes.mapIndexed { index, item -> index to item }.filter { (_, item) ->
+                    themeSearchQuery.isBlank() || item.first.contains(themeSearchQuery, ignoreCase = true)
+                }
+
+                if (filteredThemes.isEmpty()) {
+                    Text(
+                        text = "No matching themes found",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                    )
+                } else {
+                    filteredThemes.forEach { (index, themeItem) ->
+                        val (name, emoji, color) = themeItem
+                        val isSelected = selectedThemeIndex == index
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .background(
+                                    if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSelected) color.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable { viewModel.selectTheme(index) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(emoji, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            .border(
-                                1.dp,
-                                if (isSelected) color.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                                RoundedCornerShape(8.dp)
-                            )
-                            .clickable { viewModel.selectTheme(index) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(emoji, fontSize = 16.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        }
                     }
                 }
             }
@@ -1834,43 +1962,57 @@ fun DashboardDrawerContent(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // Render paper background options
-                paperColors.forEachIndexed { index, (name, emoji, color) ->
-                    val isSelected = paperIndex == index
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                            .background(
-                                if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                                RoundedCornerShape(8.dp)
-                            )
-                            .clickable { viewModel.selectPaperIndex(index) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Colored box previewing actual color
-                        Box(
+                // Render filtered paper background options
+                val filteredPapers = paperColors.mapIndexed { index, item -> index to item }.filter { (_, item) ->
+                    themeSearchQuery.isBlank() || item.first.contains(themeSearchQuery, ignoreCase = true)
+                }
+
+                if (filteredPapers.isEmpty()) {
+                    Text(
+                        text = "No matching backgrounds found",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                    )
+                } else {
+                    filteredPapers.forEach { (index, paperItem) ->
+                        val (name, emoji, color) = paperItem
+                        val isSelected = paperIndex == index
+                        Row(
                             modifier = Modifier
-                                .size(18.dp)
-                                .background(color, RoundedCornerShape(4.dp))
-                                .border(0.5.dp, Color.Gray, RoundedCornerShape(4.dp)),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .background(
+                                    if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable { viewModel.selectPaperIndex(index) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(emoji, fontSize = 10.sp)
+                            // Colored box previewing actual color
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .background(color, RoundedCornerShape(4.dp))
+                                    .border(1.dp, Color.Gray.copy(alpha = 0.4f), RoundedCornerShape(4.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(emoji, fontSize = 10.sp)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
             }
@@ -1899,12 +2041,12 @@ fun DashboardDrawerContent(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.activeCv.value = activeCv.copy(stylePreference = style) }
+                                .clickable { viewModel.updateCv { it.copy(stylePreference = style) } }
                                 .padding(vertical = 2.dp)
                         ) {
                             RadioButton(
                                 selected = isStyleSelected,
-                                onClick = { viewModel.activeCv.value = activeCv.copy(stylePreference = style) }
+                                onClick = { viewModel.updateCv { it.copy(stylePreference = style) } }
                             )
                             Text(style, style = MaterialTheme.typography.bodySmall)
                         }
@@ -1918,12 +2060,12 @@ fun DashboardDrawerContent(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.activeCv.value = activeCv.copy(layout = ly) }
+                                .clickable { viewModel.updateCv { it.copy(layout = ly) } }
                                 .padding(vertical = 2.dp)
                         ) {
                             RadioButton(
                                 selected = isLySelected,
-                                onClick = { viewModel.activeCv.value = activeCv.copy(layout = ly) }
+                                onClick = { viewModel.updateCv { it.copy(layout = ly) } }
                             )
                             Text(ly, style = MaterialTheme.typography.bodySmall)
                         }
@@ -2178,6 +2320,483 @@ fun DashboardDrawerContent(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+            // PRO UNIVERSAL LAYOUT & PERMISSIONS STUDIO
+            val isProActive by viewModel.isProStudioEnabled.collectAsStateWithLifecycle()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                    .padding(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "PRO Universal Design Studio",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Switch(
+                        checked = isProActive,
+                        onCheckedChange = { viewModel.setIsProStudioEnabled(it) },
+                        modifier = Modifier.scale(0.85f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // --- Part A: System Access Permissions ---
+                Text(
+                    text = "System Permissions Access",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val context = LocalContext.current
+                val hasStorageState = remember {
+                    mutableStateOf(
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_MEDIA_IMAGES) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        } else {
+                            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        }
+                    )
+                }
+
+                val hasAllFilesState = remember {
+                    mutableStateOf(
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            android.os.Environment.isExternalStorageManager()
+                        } else {
+                            true
+                        }
+                    )
+                }
+
+                val hasNotificationState = remember {
+                    mutableStateOf(
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        } else {
+                            true
+                        }
+                    )
+                }
+
+                val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+                ) { map ->
+                    hasStorageState.value = map[android.Manifest.permission.READ_MEDIA_IMAGES] == true || map[android.Manifest.permission.READ_EXTERNAL_STORAGE] == true
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        hasNotificationState.value = map[android.Manifest.permission.POST_NOTIFICATIONS] == true
+                    }
+                    com.example.util.SystemNotificationManager.dispatchNotification(
+                        context,
+                        "Permissions Configured",
+                        "High fidelity document storage & notification services enabled!"
+                    )
+                }
+
+                // Indicators
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (hasStorageState.value) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .padding(6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (hasStorageState.value) "✓ Storage Active" else "✗ Storage Closed",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (hasStorageState.value) Color(0xFF2E7D32) else Color(0xFFC62828)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (hasNotificationState.value) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .padding(6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (hasNotificationState.value) "✓ Alerts Engaged" else "✗ Alerts Blocked",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (hasNotificationState.value) Color(0xFF2E7D32) else Color(0xFFC62828)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Button(
+                    onClick = {
+                        val perms = mutableListOf<String>()
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            perms.add(android.Manifest.permission.POST_NOTIFICATIONS)
+                            perms.add(android.Manifest.permission.READ_MEDIA_IMAGES)
+                        } else {
+                            perms.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                            if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.Q) {
+                                perms.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            }
+                        }
+                        launcher.launch(perms.toTypedArray())
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
+                ) {
+                    Icon(Icons.Default.Verified, contentDescription = null, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Enable Standard Permissions", style = MaterialTheme.typography.labelSmall)
+                }
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R && !hasAllFilesState.value) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                    data = android.net.Uri.parse("package:${context.packageName}")
+                                }
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                                context.startActivity(intent)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
+                    ) {
+                        Text("Grant Full Storage Access", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // --- Part B: Customize Global Document Font ---
+                Text(
+                    text = "Universal Font Family Choice",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf("Default", "Serif", "Monospace", "Cursive").forEach { font ->
+                        val isSel = customFontFamilyState == font
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (isSel) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .clickable { viewModel.setCustomFontFamily(font) }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = font,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Bold / Italic modifiers
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Apply Global Bold Style", style = MaterialTheme.typography.bodySmall)
+                    Switch(
+                        checked = isFontBoldState,
+                        onCheckedChange = { viewModel.setIsFontBold(it) }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Apply Global Italic Style", style = MaterialTheme.typography.bodySmall)
+                    Switch(
+                        checked = isFontItalicState,
+                        onCheckedChange = { viewModel.setIsFontItalic(it) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Font size offset selection
+                Text(
+                    text = "Global Text Size Scale Offset (${if(customFontSizeOffsetState >= 0) "+" else ""}$customFontSizeOffsetState sp)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf(-3, -1, 0, 2, 4, 6).forEach { offset ->
+                        val isSel = customFontSizeOffsetState == offset
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (isSel) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .clickable { viewModel.setCustomFontSizeOffset(offset) }
+                                .padding(vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${if(offset >= 0) "+" else ""}$offset",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSel) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // --- Part C: Custom Pro Watermark Symbol ---
+                Text(
+                    text = "Universal Watermark Symbol / Emoji",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = watermarkSymbolState,
+                    onValueChange = { viewModel.setWatermarkSymbol(it) },
+                    placeholder = { Text("E.g., 🔐, ⚠️, ★, OFFICIAL stamping", fontSize = 11.sp) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    listOf("🔐", "⚠️", "🔥", "★", "APPROVED", "CONFIDENTIAL").forEach { symbol ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
+                                .clickable {
+                                    viewModel.setUseWatermark(true)
+                                    viewModel.setWatermarkSymbol(symbol)
+                                }
+                                .padding(6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(symbol, fontSize = 8.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // --- Part D: Custom Paper Paint & Border Spacing ---
+                Text(
+                    text = "Universal Canvas Paper Paint (HEX code)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Preview box of the custom color live
+                    val prevColor = if (customPaperColorHexState.isNotBlank()) {
+                        try { Color(android.graphics.Color.parseColor(customPaperColorHexState)) } catch (e: Exception) { Color.LightGray }
+                    } else {
+                        Color.White
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .background(prevColor, RoundedCornerShape(4.dp))
+                            .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedTextField(
+                        value = customPaperColorHexState,
+                        onValueChange = { viewModel.setCustomPaperColorHex(it) },
+                        placeholder = { Text("E.g. #FAF5EB or #FFFFFF", fontSize = 11.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                // Quick universal background presets
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf(
+                        "Plain" to "#FFFFFF",
+                        "Vintage" to "#FAF0D7",
+                        "Warm" to "#FAF5EB",
+                        "Cosmic" to "#E0F2FE",
+                        "Sunset" to "#FFF1EB",
+                        "Cyber" to "#1E456B"
+                    ).forEach { (lbl, code) ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
+                                .clickable { viewModel.setCustomPaperColorHex(code) }
+                                .padding(vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(lbl, fontSize = 7.5.sp, maxLines = 1)
+                        }
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // --- Part E: Page Outline & Geometry Corners ---
+                Text(
+                    text = "Page Rounded Corners ($documentCornerRadiusState dp)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf(0, 4, 8, 12, 16, 24).forEach { radius ->
+                        val isSel = documentCornerRadiusState == radius
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (isSel) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .clickable { viewModel.setDocumentCornerRadius(radius) }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("${radius}dp", fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Display Page Outline Border", style = MaterialTheme.typography.bodySmall)
+                    Switch(
+                        checked = hasBorderOutlineState,
+                        onCheckedChange = { viewModel.setHasBorderOutline(it) }
+                    )
+                }
+
+                if (hasBorderOutlineState) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Page Border Stroke Thickness (${borderThicknessDpState}dp)",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf(0.5f, 1.0f, 1.5f, 2.0f, 3.0f, 5.0f).forEach { thickness ->
+                            val isSel = borderThicknessDpState == thickness
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        if (isSel) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .clickable { viewModel.setBorderThicknessDp(thickness) }
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("${thickness}dp", fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

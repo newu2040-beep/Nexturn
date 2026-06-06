@@ -34,6 +34,18 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
 
     val universalSizeIndex = MutableStateFlow(prefs.getInt("universal_size_index", 1)) // 0: Compact, 1: Balanced, 2: Spacious
 
+    // Pro design settings flows
+    val isProStudioEnabled = MutableStateFlow(prefs.getBoolean("is_pro_studio_enabled", true))
+    val customFontFamily = MutableStateFlow(prefs.getString("custom_font_family", "Default") ?: "Default")
+    val isFontBold = MutableStateFlow(prefs.getBoolean("is_font_bold", false))
+    val isFontItalic = MutableStateFlow(prefs.getBoolean("is_font_italic", false))
+    val customFontSizeOffset = MutableStateFlow(prefs.getInt("custom_font_size_offset", 0))
+    val customPaperColorHex = MutableStateFlow(prefs.getString("custom_paper_color_hex", "") ?: "")
+    val documentCornerRadius = MutableStateFlow(prefs.getInt("document_corner_radius", 4))
+    val hasBorderOutline = MutableStateFlow(prefs.getBoolean("has_border_outline", true))
+    val borderThicknessDp = MutableStateFlow(prefs.getFloat("border_thickness_dp", 1.0f))
+    val watermarkSymbol = MutableStateFlow(prefs.getString("watermark_symbol", "") ?: "")
+
     fun toggleThemeMode() {
         val nextMode = !isDarkTheme.value
         isDarkTheme.value = nextMode
@@ -93,6 +105,56 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     fun setUniversalSizeIndex(value: Int) {
         universalSizeIndex.value = value
         prefs.edit().putInt("universal_size_index", value).apply()
+    }
+
+    fun setCustomFontFamily(value: String) {
+        customFontFamily.value = value
+        prefs.edit().putString("custom_font_family", value).apply()
+    }
+
+    fun setIsFontBold(value: Boolean) {
+        isFontBold.value = value
+        prefs.edit().putBoolean("is_font_bold", value).apply()
+    }
+
+    fun setIsFontItalic(value: Boolean) {
+        isFontItalic.value = value
+        prefs.edit().putBoolean("is_font_italic", value).apply()
+    }
+
+    fun setCustomFontSizeOffset(value: Int) {
+        customFontSizeOffset.value = value
+        prefs.edit().putInt("custom_font_size_offset", value).apply()
+    }
+
+    fun setCustomPaperColorHex(value: String) {
+        customPaperColorHex.value = value
+        prefs.edit().putString("custom_paper_color_hex", value).apply()
+    }
+
+    fun setDocumentCornerRadius(value: Int) {
+        documentCornerRadius.value = value
+        prefs.edit().putInt("document_corner_radius", value).apply()
+    }
+
+    fun setHasBorderOutline(value: Boolean) {
+        hasBorderOutline.value = value
+        prefs.edit().putBoolean("has_border_outline", value).apply()
+    }
+
+    fun setBorderThicknessDp(value: Float) {
+        borderThicknessDp.value = value
+        prefs.edit().putFloat("border_thickness_dp", value).apply()
+    }
+
+    fun setWatermarkSymbol(value: String) {
+        watermarkSymbol.value = value
+        prefs.edit().putString("watermark_symbol", value).apply()
+    }
+
+    fun setIsProStudioEnabled(value: Boolean) {
+        isProStudioEnabled.value = value
+        prefs.edit().putBoolean("is_pro_studio_enabled", value).apply()
     }
 
     // User Profile persistent auto-save state
@@ -218,14 +280,14 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "BUSINESS_LETTER")?.let { doc ->
             activeBusinessLetter.value = BusinessLetterData.fromJson(doc.contentJson)
         }
-        for (index in 11..23) {
+        for (index in 11..46) {
             repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "DYNAMIC_$index")?.let { doc ->
                 activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
                     put(index, doc.contentJson)
                 }
             }
         }
-        for (index in 11..23) {
+        for (index in 11..46) {
             repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "CUSTOM_$index")?.let { doc ->
                 activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
                     put(index, CustomDocumentData.fromJson(doc.contentJson))

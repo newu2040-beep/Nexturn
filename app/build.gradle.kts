@@ -119,3 +119,24 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+tasks.register("copyAppLauncherIcons") {
+    notCompatibleWithConfigurationCache("Requires dynamic directory copies for launcher icons")
+    doFirst {
+        val srcFile = file("src/main/res/drawable/ic_app_logo_foreground.png")
+        if (srcFile.exists()) {
+            val densities = listOf("hdpi", "mdpi", "xhdpi", "xxhdpi", "xxxhdpi")
+            for (density in densities) {
+                val destDir = file("src/main/res/mipmap-$density")
+                destDir.mkdirs()
+                srcFile.copyTo(File(destDir, "ic_launcher.png"), overwrite = true)
+                srcFile.copyTo(File(destDir, "ic_launcher_round.png"), overwrite = true)
+            }
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("copyAppLauncherIcons")
+}
+

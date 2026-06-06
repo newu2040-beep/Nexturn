@@ -36,7 +36,18 @@ data class DocumentStyleConfig(
     val signatureText: String = "",
     val signatureStyle: String = "Cursive",
     val signatureBitmapBase64: String = "",
-    val spacingMultiplier: Float = 1.0f
+    val spacingMultiplier: Float = 1.0f,
+    // Universal design styling fields
+    val customFontFamily: String = "Default",
+    val isFontBold: Boolean = false,
+    val isFontItalic: Boolean = false,
+    val customFontSizeOffset: Int = 0,
+    val customPaperColorHex: String = "",
+    val documentCornerRadius: Int = 4,
+    val hasBorderOutline: Boolean = true,
+    val borderThicknessDp: Float = 1.0f,
+    val watermarkSymbol: String = "",
+    val isProStudioEnabled: Boolean = true
 )
 
 val LocalDocumentStyleConfig = staticCompositionLocalOf { DocumentStyleConfig() }
@@ -50,101 +61,173 @@ fun PaperCanvas(
     val styleConfig = LocalDocumentStyleConfig.current
     val spacingMultiplier = styleConfig.spacingMultiplier
 
+    // Parse custom paper color if supplied
+    val finalPaperColor = if (styleConfig.isProStudioEnabled && styleConfig.customPaperColorHex.isNotBlank()) {
+        try {
+            Color(android.graphics.Color.parseColor(styleConfig.customPaperColorHex))
+        } catch (e: Exception) {
+            paperColor
+        }
+    } else {
+        paperColor
+    }
+
+    // Border stroke selector
+    val cardBorder = if (styleConfig.isProStudioEnabled && styleConfig.hasBorderOutline) {
+        BorderStroke(styleConfig.borderThicknessDp.dp, Color(0xFFE0E0E0))
+    } else {
+        BorderStroke(1.dp, Color(0xFFE0E0E0))
+    }
+
+    // Global Font family mapping for the canvas document sheet
+    val baseFontFamily = if (styleConfig.isProStudioEnabled) {
+        when (styleConfig.customFontFamily) {
+            "Serif" -> androidx.compose.ui.text.font.FontFamily.Serif
+            "Monospace" -> androidx.compose.ui.text.font.FontFamily.Monospace
+            "Cursive" -> androidx.compose.ui.text.font.FontFamily.Cursive
+            else -> androidx.compose.ui.text.font.FontFamily.Default
+        }
+    } else {
+        androidx.compose.ui.text.font.FontFamily.Default
+    }
+
+    val currentTypography = MaterialTheme.typography
+    val offsetVal = if (styleConfig.isProStudioEnabled) styleConfig.customFontSizeOffset else 0
+    fun addFontSizeOffset(unit: androidx.compose.ui.unit.TextUnit, offset: Int): androidx.compose.ui.unit.TextUnit {
+        return if (unit.isSp) {
+            (unit.value + offset).sp
+        } else {
+            unit
+        }
+    }
+    val forcedWeight = if (styleConfig.isProStudioEnabled && styleConfig.isFontBold) androidx.compose.ui.text.font.FontWeight.Bold else null
+    val forcedStyle = if (styleConfig.isProStudioEnabled && styleConfig.isFontItalic) androidx.compose.ui.text.font.FontStyle.Italic else null
+    val cornerRadius = if (styleConfig.isProStudioEnabled) styleConfig.documentCornerRadius else 4
+
+    // Overriding typography system to support live customizations
+    val customTypography = androidx.compose.material3.Typography(
+        displayLarge = currentTypography.displayLarge.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.displayLarge.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.displayLarge.fontWeight, fontStyle = forcedStyle ?: currentTypography.displayLarge.fontStyle),
+        displayMedium = currentTypography.displayMedium.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.displayMedium.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.displayMedium.fontWeight, fontStyle = forcedStyle ?: currentTypography.displayMedium.fontStyle),
+        displaySmall = currentTypography.displaySmall.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.displaySmall.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.displaySmall.fontWeight, fontStyle = forcedStyle ?: currentTypography.displaySmall.fontStyle),
+        headlineLarge = currentTypography.headlineLarge.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.headlineLarge.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.headlineLarge.fontWeight, fontStyle = forcedStyle ?: currentTypography.headlineLarge.fontStyle),
+        headlineMedium = currentTypography.headlineMedium.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.headlineMedium.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.headlineMedium.fontWeight, fontStyle = forcedStyle ?: currentTypography.headlineMedium.fontStyle),
+        headlineSmall = currentTypography.headlineSmall.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.headlineSmall.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.headlineSmall.fontWeight, fontStyle = forcedStyle ?: currentTypography.headlineSmall.fontStyle),
+        titleLarge = currentTypography.titleLarge.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.titleLarge.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.titleLarge.fontWeight, fontStyle = forcedStyle ?: currentTypography.titleLarge.fontStyle),
+        titleMedium = currentTypography.titleMedium.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.titleMedium.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.titleMedium.fontWeight, fontStyle = forcedStyle ?: currentTypography.titleMedium.fontStyle),
+        titleSmall = currentTypography.titleSmall.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.titleSmall.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.titleSmall.fontWeight, fontStyle = forcedStyle ?: currentTypography.titleSmall.fontStyle),
+        bodyLarge = currentTypography.bodyLarge.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.bodyLarge.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.bodyLarge.fontWeight, fontStyle = forcedStyle ?: currentTypography.bodyLarge.fontStyle),
+        bodyMedium = currentTypography.bodyMedium.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.bodyMedium.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.bodyMedium.fontWeight, fontStyle = forcedStyle ?: currentTypography.bodyMedium.fontStyle),
+        bodySmall = currentTypography.bodySmall.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.bodySmall.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.bodySmall.fontWeight, fontStyle = forcedStyle ?: currentTypography.bodySmall.fontStyle),
+        labelLarge = currentTypography.labelLarge.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.labelLarge.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.labelLarge.fontWeight, fontStyle = forcedStyle ?: currentTypography.labelLarge.fontStyle),
+        labelMedium = currentTypography.labelMedium.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.labelMedium.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.labelMedium.fontWeight, fontStyle = forcedStyle ?: currentTypography.labelMedium.fontStyle),
+        labelSmall = currentTypography.labelSmall.copy(fontFamily = baseFontFamily, fontSize = addFontSizeOffset(currentTypography.labelSmall.fontSize, offsetVal), fontWeight = forcedWeight ?: currentTypography.labelSmall.fontWeight, fontStyle = forcedStyle ?: currentTypography.labelSmall.fontStyle)
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding((8 * spacingMultiplier).dp)
-            .shadow(4.dp, shape = RoundedCornerShape(4.dp)),
-        colors = CardDefaults.cardColors(containerColor = paperColor),
-        shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, Color(0xFFE0E0E0))
+            .shadow(4.dp, shape = RoundedCornerShape(cornerRadius.dp)),
+        colors = CardDefaults.cardColors(containerColor = finalPaperColor),
+        shape = RoundedCornerShape(cornerRadius.dp),
+        border = cardBorder
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Content layer
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding((24 * spacingMultiplier).dp)
-            ) {
-                content()
-                
-                // If digital signature is enabled, append signature under professional line
-                if (styleConfig.useSignature) {
-                    Spacer(modifier = Modifier.height((24 * spacingMultiplier).dp))
-                    Column(
-                        modifier = Modifier.align(Alignment.End),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Digitally Signed",
-                            fontSize = (9 * spacingMultiplier).sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        if (styleConfig.signatureBitmapBase64.isNotBlank()) {
-                            val imageBytes = android.util.Base64.decode(styleConfig.signatureBitmapBase64, android.util.Base64.DEFAULT)
-                            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            if (bitmap != null) {
-                                androidx.compose.foundation.Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = "Signature",
-                                    modifier = Modifier.height((40 * spacingMultiplier).dp)
+        MaterialTheme(typography = customTypography) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                // Content layer
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding((24 * spacingMultiplier).dp)
+                ) {
+                    content()
+                    
+                    // If digital signature is enabled, append signature under professional line
+                    if (styleConfig.useSignature) {
+                        Spacer(modifier = Modifier.height((24 * spacingMultiplier).dp))
+                        Column(
+                            modifier = Modifier.align(Alignment.End),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Digitally Signed",
+                                fontSize = (9 * spacingMultiplier).sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            if (styleConfig.signatureBitmapBase64.isNotBlank()) {
+                                val imageBytes = android.util.Base64.decode(styleConfig.signatureBitmapBase64, android.util.Base64.DEFAULT)
+                                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                                if (bitmap != null) {
+                                    androidx.compose.foundation.Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Signature",
+                                        modifier = Modifier.height((40 * spacingMultiplier).dp)
+                                    )
+                                }
+                            } else if (styleConfig.signatureText.isNotBlank()) {
+                                Text(
+                                    text = styleConfig.signatureText,
+                                    fontSize = (15 * spacingMultiplier).sp,
+                                    fontStyle = if (styleConfig.signatureStyle == "Cursive") FontStyle.Italic else FontStyle.Normal,
+                                    fontWeight = if (styleConfig.signatureStyle == "Official Bold") FontWeight.Bold else FontWeight.Medium,
+                                    fontFamily = if (styleConfig.signatureStyle == "Cursive") FontFamily.Cursive else FontFamily.Default,
+                                    color = Color(0xFF0D47A1), // professional signature color
+                                    textAlign = TextAlign.Center
                                 )
                             }
-                        } else if (styleConfig.signatureText.isNotBlank()) {
-                            Text(
-                                text = styleConfig.signatureText,
-                                fontSize = (15 * spacingMultiplier).sp,
-                                fontStyle = if (styleConfig.signatureStyle == "Cursive") FontStyle.Italic else FontStyle.Normal,
-                                fontWeight = if (styleConfig.signatureStyle == "Official Bold") FontWeight.Bold else FontWeight.Medium,
-                                fontFamily = if (styleConfig.signatureStyle == "Cursive") FontFamily.Serif else FontFamily.SansSerif,
-                                color = Color(0xFF0D47A1), // professional signature color
-                                textAlign = TextAlign.Center
+                            Box(
+                                modifier = Modifier
+                                    .width((120 * spacingMultiplier).dp)
+                                    .height(1.dp)
+                                    .background(Color.LightGray)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .width((120 * spacingMultiplier).dp)
-                                .height(1.dp)
-                                .background(Color.LightGray)
-                        )
                     }
                 }
-            }
 
-            // Watermark overlay layer
-            if (styleConfig.useWatermark) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .align(Alignment.Center)
-                        .background(Color.Transparent),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (styleConfig.watermarkImageUri.isNotBlank()) {
-                        AsyncImage(
-                            model = styleConfig.watermarkImageUri,
-                            contentDescription = "Watermark",
-                            modifier = Modifier
-                                .fillMaxSize(0.6f)
-                                .rotate(-35f),
-                            alpha = 0.15f,
-                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                        )
-                    } else if (styleConfig.watermarkText.isNotBlank()) {
-                        Text(
-                            text = styleConfig.watermarkText,
-                            fontSize = 38.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0x139E9E9E), // subtle opacity watermark
-                            textAlign = TextAlign.Center,
-                            fontFamily = FontFamily.Monospace,
-                            letterSpacing = 2.sp,
-                            maxLines = 1,
-                            modifier = Modifier.rotate(-35f)
-                        )
+                // Watermark overlay layer
+                if (styleConfig.useWatermark) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .align(Alignment.Center)
+                            .background(Color.Transparent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (styleConfig.watermarkSymbol.isNotBlank()) {
+                            Text(
+                                text = styleConfig.watermarkSymbol,
+                                fontSize = (65 * spacingMultiplier).sp,
+                                color = Color(0x1B9E9E9E), // subtle custom watermark symbol stamp
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.rotate(-20f)
+                            )
+                        } else if (styleConfig.watermarkImageUri.isNotBlank()) {
+                            AsyncImage(
+                                model = styleConfig.watermarkImageUri,
+                                contentDescription = "Watermark",
+                                modifier = Modifier
+                                    .fillMaxSize(0.6f)
+                                    .rotate(-35f),
+                                alpha = 0.15f,
+                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                            )
+                        } else if (styleConfig.watermarkText.isNotBlank()) {
+                            Text(
+                                text = styleConfig.watermarkText,
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0x139E9E9E), // subtle opacity watermark
+                                textAlign = TextAlign.Center,
+                                fontFamily = FontFamily.Monospace,
+                                letterSpacing = 2.sp,
+                                maxLines = 1,
+                                modifier = Modifier.rotate(-35f)
+                            )
+                        }
                     }
                 }
             }
@@ -180,6 +263,20 @@ fun CvDocumentPreview(
 ) {
     val dateStamp = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
+    val themeColor = when (data.stylePreference) {
+        "Minimal" -> Color(0xFF1E293B) // Slate Charcoal
+        "Professional" -> Color(0xFF1E3A8A) // deep blue
+        "Creative" -> Color(0xFFFF6B6B) // creative warm coral
+        else -> Color(0xFF0F766E) // Modern pine teal
+    }
+
+    val sidebarBg = when (data.stylePreference) {
+        "Minimal" -> Color(0xFFFAFAFA)
+        "Professional" -> Color(0xFFF1F5F9)
+        "Creative" -> Color(0xFFFFF0F0)
+        else -> Color(0xFFF5F5F5)
+    }
+
     PaperCanvas(paperColor = paperColor) {
         // STYLE & LAYOUT: As requested, support Sidebar vs Single Column
         if (data.layout == "Sidebar Layout") {
@@ -188,10 +285,10 @@ fun CvDocumentPreview(
                 Column(
                     modifier = Modifier
                         .weight(0.35f)
-                        .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp))
+                        .background(sidebarBg, RoundedCornerShape(4.dp))
                         .padding(12.dp)
                 ) {
-                    Text("CONTACT INFO", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+                    Text("CONTACT INFO", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(4.dp))
                     if (data.email.isNotBlank()) Text(data.email, fontSize = 9.sp, color = Color.Black)
                     if (data.phone.isNotBlank()) Text(data.phone, fontSize = 9.sp, color = Color.Black)
@@ -199,7 +296,7 @@ fun CvDocumentPreview(
                     if (data.portfolioUrl.isNotBlank()) Text(data.portfolioUrl, fontSize = 9.sp, color = Color(0xFF0D47A1))
                     
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("TECHNICAL SKILLS", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+                    Text("TECHNICAL SKILLS", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
                     if (data.technicalSkills.isEmpty()) {
                         ClickablePlaceholder("[+ Click here to add skills]", "technicalSkills", onNavigateToField)
                     } else {
@@ -209,7 +306,7 @@ fun CvDocumentPreview(
                     }
                     
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+                    Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
                     if (data.languages.isEmpty()) {
                         ClickablePlaceholder("[+ Add languages]", "languages", onNavigateToField)
                     } else {
@@ -227,7 +324,7 @@ fun CvDocumentPreview(
                     if (data.fullName.isBlank()) {
                         ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
                     } else {
-                        Text(data.fullName, style = MaterialTheme.typography.headlineSmall, color = Color(0xFF1E1E1E), fontWeight = FontWeight.Bold)
+                        Text(data.fullName, style = MaterialTheme.typography.headlineSmall, color = themeColor, fontWeight = FontWeight.Bold)
                     }
                     if (data.jobTitle.isBlank()) {
                         ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
@@ -236,7 +333,7 @@ fun CvDocumentPreview(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = Color(0xFF333333), fontWeight = FontWeight.Bold)
+                    Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(2.dp))
                     if (data.professionalSummary.isBlank()) {
                         ClickablePlaceholder("[Click to write professional summary]", "professionalSummary", onNavigateToField)
@@ -245,7 +342,7 @@ fun CvDocumentPreview(
                     }
                     
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("WORK EXPERIENCE", fontSize = 11.sp, color = Color(0xFF333333), fontWeight = FontWeight.Bold)
+                    Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
                     if (data.workExperiences.isEmpty()) {
                         ClickablePlaceholder("[Click to add work experiences]", "workExperiences", onNavigateToField)
                     } else {
@@ -260,7 +357,7 @@ fun CvDocumentPreview(
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("EDUCATION", fontSize = 11.sp, color = Color(0xFF333333), fontWeight = FontWeight.Bold)
+                    Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
                     if (data.educations.isEmpty()) {
                         ClickablePlaceholder("[Add your academics]", "educations", onNavigateToField)
                     } else {
@@ -277,7 +374,7 @@ fun CvDocumentPreview(
                 if (data.fullName.isBlank()) {
                     ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
                 } else {
-                    Text(data.fullName, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF1E1E1E), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Text(data.fullName, style = MaterialTheme.typography.headlineMedium, color = themeColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 }
                 if (data.jobTitle.isBlank()) {
                     ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
@@ -305,11 +402,11 @@ fun CvDocumentPreview(
                     )
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Color.LightGray)
+                HorizontalDivider(color = themeColor.copy(alpha = 0.3f))
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
+            Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(3.dp))
             if (data.professionalSummary.isBlank()) {
                 ClickablePlaceholder("[Click to write professional summary, suggest 3-4 sentences]", "professionalSummary", onNavigateToField)
@@ -318,8 +415,8 @@ fun CvDocumentPreview(
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-            Text("WORK EXPERIENCE", fontSize = 11.sp, color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
-            HorizontalDivider(color = Color(0xFFE0E0E0))
+            Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+            HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
             if (data.workExperiences.isEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 ClickablePlaceholder("[Click to add work experiences, add job title, dates and accomplishments]", "workExperiences", onNavigateToField)
@@ -338,8 +435,8 @@ fun CvDocumentPreview(
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-            Text("EDUCATION", fontSize = 11.sp, color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold)
-            HorizontalDivider(color = Color(0xFFE0E0E0))
+            Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+            HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
             if (data.educations.isEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 ClickablePlaceholder("[Click to add your academic degrees and institution details]", "educations", onNavigateToField)

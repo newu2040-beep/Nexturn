@@ -303,3 +303,46 @@ data class PerformanceReviewData(
         }
     }
 }
+
+data class GenericDocumentData(
+    val title: String = "",
+    val fields: Map<String, String> = emptyMap(),
+    val listItems: List<String> = emptyList()
+) {
+    fun toJson(): String {
+        return JSONObject().apply {
+            put("title", title)
+            val fObj = JSONObject()
+            fields.forEach { (k, v) -> fObj.put(k, v) }
+            put("fields", fObj)
+            val lArr = JSONArray()
+            listItems.forEach { lArr.put(it) }
+            put("listItems", lArr)
+        }.toString()
+    }
+    companion object {
+        fun fromJson(jsonStr: String): GenericDocumentData {
+            if (jsonStr.isEmpty()) return GenericDocumentData()
+            val js = JSONObject(jsonStr)
+            val fMap = mutableMapOf<String, String>()
+            val fObj = js.optJSONObject("fields")
+            if (fObj != null) {
+                fObj.keys().forEach { k ->
+                    fMap[k] = fObj.optString(k, "")
+                }
+            }
+            val lList = mutableListOf<String>()
+            val lArr = js.optJSONArray("listItems")
+            if (lArr != null) {
+                for (i in 0 until lArr.length()) {
+                    lList.add(lArr.optString(i, ""))
+                }
+            }
+            return GenericDocumentData(
+                title = js.optString("title", ""),
+                fields = fMap,
+                listItems = lList
+            )
+        }
+    }
+}

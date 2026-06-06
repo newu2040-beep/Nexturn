@@ -1,6 +1,7 @@
 package com.example.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -447,26 +448,581 @@ fun PerformanceReviewPreview(data: PerformanceReviewData) {
 }
 
 @Composable
+fun GenericDocumentPreview(selectedTab: Int, data: GenericDocumentData) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = data.title.ifBlank { "Document Preview" },
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        data.fields.forEach { (key, value) ->
+            if (value.isNotBlank() && key != "title") {
+                val label = when (key) {
+                    "recipientName" -> "Recipient Name"
+                    "salutation" -> "Salutation"
+                    "message" -> "Personal Message"
+                    "closing" -> "Closing"
+                    "senderName" -> "Sender Name"
+                    "hostName" -> "Host / Organizer Name"
+                    "eventType" -> "Event Name / Type"
+                    "dateTime" -> "Date & Time"
+                    "location" -> "Location / Venue"
+                    "rsvpContact" -> "RSVP Contact Details"
+                    "specialNotes" -> "Special Instructions"
+                    "reason" -> "Reason"
+                    "resolution" -> "Resolution Plan"
+                    "deceasedName" -> "Deceased Person Name"
+                    "memories" -> "Fond Memories / Condolence"
+                    "supportOffer" -> "Offer of Support"
+                    "achievement" -> "Achievement Details"
+                    "pieceTitle" -> "Title"
+                    "authorName" -> "Author Name"
+                    "genre" -> "Genre / Tone"
+                    "content" -> "Content Body Text"
+                    "date" -> "Date / Stamp"
+                    "mood" -> "Mood & Perspective"
+                    "reflection" -> "Personal Journal Reflection"
+                    "gratefulFor" -> "Grateful Elements"
+                    "listTitle" -> "Objective / Title"
+                    "dueDate" -> "Target Due Date"
+                    "storeName" -> "Target Store Name"
+                    "recipeName" -> "Recipe Name"
+                    "prepTime" -> "Prep & Cook Time"
+                    "servings" -> "Yield & Servings"
+                    "instructions" -> "Preparation Steps"
+                    "recipient" -> "Recipient Name"
+                    "gift" -> "Occasion / Gift Description"
+                    "warmMessage" -> "Personal Greeting Message"
+                    "sender" -> "Sender Identity"
+                    "eventName" -> "Event Name"
+                    "responderName" -> "Guest / Responder"
+                    "acceptStatus" -> "RSVP Status"
+                    "dietaryNeeds" -> "Dietary / Accommodations"
+                    "petitionTitle" -> "Petition Title"
+                    "targetAuthority" -> "Target Governing Authority"
+                    "statement" -> "Petition Accords & Statement"
+                    "initiatorName" -> "Prime Initiator Contact"
+                    "issueDate" -> "Date of Occurrence"
+                    "problemDescription" -> "Problem Report"
+                    "desiredOutcome" -> "Expected Resolution"
+                    "senderContact" -> "Your Contact Info"
+                    "refereeName" -> "Professional Referee Name"
+                    "purpose" -> "Applying Program/Agency"
+                    "deadline" -> "Filing Deadline"
+                    "keyAchievements" -> "Key Points"
+                    "employeeName" -> "Associate"
+                    "acknowledgedDate" -> "Docket Date"
+                    "lastDay" -> "Severance Date"
+                    "transitionNotes" -> "Transition Directives"
+                    "managerName" -> "Manager Signature Authority"
+                    "issuedTo" -> "Subject Party"
+                    "dateIssued" -> "Issuance Date"
+                    "violation" -> "Infraction Details"
+                    "consequences" -> "Corrective Measures"
+                    "issuedBy" -> "Supervisor Title"
+                    "presenter" -> "Host Presenter"
+                    "headerText" -> "Display Headline"
+                    "details" -> "Specifications"
+                    "time" -> "Time Period"
+                    "contactInfo" -> "Contact Authority"
+                    "testatorName" -> "Your Full Name"
+                    "executor" -> "Appointed Executor"
+                    "bequests" -> "Bequests"
+                    "witnesses" -> "Witness Signature"
+                    "landlord" -> "Lessor (Landlord)"
+                    "tenant" -> "Lessee (Tenant)"
+                    "address" -> "Real Estate Address"
+                    "rentAmount" -> "Rental Consideration"
+                    "terms" -> "Lease Terms & Covenants"
+                    "seller" -> "Seller Name"
+                    "buyer" -> "Buyer Name"
+                    "itemDescription" -> "Sale Asset"
+                    "price" -> "Purchase Price"
+                    "warrantyDetails" -> "Warranty Terms"
+                    "borrower" -> "Borrower"
+                    "lender" -> "Lender"
+                    "principalAmount" -> "Debt Principal"
+                    "interestRate" -> "Interest Rate"
+                    "repaymentSchedule" -> "Repayment Plan"
+                    else -> if (key.isNotEmpty()) key[0].uppercaseChar() + key.substring(1) else ""
+                }
+                
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+            }
+        }
+        
+        if (data.listItems.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Checklist Elements:",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            data.listItems.forEach { item ->
+                Row(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("☑  ", fontWeight = FontWeight.Bold)
+                    Text(text = item, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+fun getDefaultGenericDoc(selectedTab: Int): GenericDocumentData {
+    return when (selectedTab) {
+        23 -> GenericDocumentData(
+            title = "Love Letter",
+            fields = mapOf(
+                "recipientName" to "My Beloved",
+                "message" to "My heart beats only for you. Every moment apart feels like an eternity.",
+                "closing" to "Forever yours",
+                "senderName" to "Your Devoted Partner"
+            )
+        )
+        24 -> GenericDocumentData(
+            title = "Event Invitation",
+            fields = mapOf(
+                "hostName" to "The Shah Family",
+                "eventType" to "Summer Celebration Party",
+                "dateTime" to "Saturday, July 18th at 6:00 PM",
+                "location" to "The Grand Garden Pavilions, District 5",
+                "rsvpContact" to "Rahul at 555-0199",
+                "specialNotes" to "Please wear elegant pastel attire. Valet parking provided."
+            )
+        )
+        25 -> GenericDocumentData(
+            title = "Apology Letter",
+            fields = mapOf(
+                "recipientName" to "Valued Client",
+                "salutation" to "Dear Business Partner",
+                "reason" to "the service interruptions during software maintenance on June 5th",
+                "resolution" to "We have upgraded our secondary backup servers and instituted real-time health alerts to prevent any future occurrences.",
+                "closing" to "Deeply regretful",
+                "senderName" to "Rahul Shah, Director of Operations"
+            )
+        )
+        26 -> GenericDocumentData(
+            title = "Condolence & Sympathy Letter",
+            fields = mapOf(
+                "recipientName" to "The Henderson Family",
+                "deceasedName" to "Uncle Robert",
+                "memories" to "He was exceptionally generous and brought laughter to everyone in the room. His bright spirit will never be forgotten.",
+                "supportOffer" to "Please let us know if we can assist you with meals, housekeeping, or anything else during this hard transition.",
+                "closing" to "With heartfelt condolences",
+                "senderName" to "Rahul and Family"
+            )
+        )
+        27 -> GenericDocumentData(
+            title = "Congratulations Letter",
+            fields = mapOf(
+                "recipientName" to "Sarah Jenkins",
+                "achievement" to "being promoted to Lead Software Engineer",
+                "message" to "Your focus, exceptional problem-solving skills, and deep engineering design expertise made this a well-deserved recognition.",
+                "closing" to "Wishing you absolute success",
+                "senderName" to "Rahul Shah, engineering partner"
+            )
+        )
+        28 -> GenericDocumentData(
+            title = "Poem / Short Story Template",
+            fields = mapOf(
+                "pieceTitle" to "Echoes of Tomorrow",
+                "authorName" to "Rahul Shah",
+                "genre" to "Philosophical Sci-Fi Poem",
+                "content" to "Silhouettes fade in the digital stream,\nEchoes of choices in an ancient dream.\nWe write the future line by line,\nBridging the binary and the divine."
+            )
+        )
+        29 -> GenericDocumentData(
+            title = "Personal Journal Entry",
+            fields = mapOf(
+                "date" to "2026-06-06",
+                "mood" to "Productive & Creative",
+                "reflection" to "Reflecting on visual aesthetics today. A clean, spacious Material 3 layout with dark tones brings so much focus and peace.",
+                "gratefulFor" to "Having the capability to build and code elegant tools that help people create."
+            )
+        )
+        30 -> GenericDocumentData(
+            title = "My Daily To-Do List",
+            fields = mapOf(
+                "listTitle" to "Workplace Launch Checklist",
+                "dueDate" to "Today before COB"
+            ),
+            listItems = listOf(
+                "Review document layout export engine",
+                "Install adaptive custom launcher icons",
+                "Align search bar at the very top of drawer UI",
+                "Run test suite to verify UI compilation"
+            )
+        )
+        31 -> GenericDocumentData(
+            title = "Shopping Checklist",
+            fields = mapOf(
+                "listTitle" to "Launch Celebration Dinner Ingredients",
+                "storeName" to "Fresh Foods Market"
+            ),
+            listItems = listOf(
+                "Fresh Basil Leaves",
+                "Heirloom Cherry Tomatoes",
+                "Aged Balsamic Glaze",
+                "Organic Jasmine Rice"
+            )
+        )
+        32 -> GenericDocumentData(
+            title = "Aesthetic Recipe Card",
+            fields = mapOf(
+                "recipeName" to "Rahul's Classic Basil Pesto Pasta",
+                "prepTime" to "20 minutes",
+                "servings" to "4 portions",
+                "instructions" to "1. Boil penne pasta in salted water until al dente.\n2. Blend basil, garlic, pine nuts, parmesan, and olive oil.\n3. Toss pasta with pesto, add halved cherry tomatoes, and serve warm with basil garnish."
+            ),
+            listItems = listOf(
+                "350g Penne Pasta",
+                "2 cups Fresh Sweet Basil",
+                "1/2 cup Parmigiano-Reggiano",
+                "1/3 cup Pine Nuts or Walnuts",
+                "1/2 cup Rich Extra Virgin Olive Oil"
+            )
+        )
+        33 -> GenericDocumentData(
+            title = "Official RSVP Response",
+            fields = mapOf(
+                "eventName" to "Nexturn Annual Gala Night",
+                "responderName" to "Rahul Shah, workspace engineer",
+                "acceptStatus" to "Happily Accepting",
+                "dietaryNeeds" to "Vegetarian option, no peanut allergies"
+            )
+        )
+        34 -> GenericDocumentData(
+            title = "Public Petition",
+            fields = mapOf(
+                "petitionTitle" to "Revitalize the City Green Canopy",
+                "targetAuthority" to "City Parks and Recreation Bureau",
+                "statement" to "We petition the council to plant 500 indigenous shade trees along the central avenue to combat urban heat island effects.",
+                "initiatorName" to "Rahul Shah, Community Alliance Representative"
+            )
+        )
+        35 -> GenericDocumentData(
+            title = "Formal Complaint Letter",
+            fields = mapOf(
+                "recipientName" to "Metro Transit Commission",
+                "issueDate" to "June 4th, 2026",
+                "problemDescription" to "Multiple express bus routes were cancelled without real-time notifications on the transit app, causing commuters 1+ hour waiting times.",
+                "desiredOutcome" to "Implement instant push alerts for route shifts and restore transit frequency.",
+                "senderContact" to "Rahul Shah - rahulshah2021nice@gmail.com"
+            )
+        )
+        36 -> GenericDocumentData(
+            title = "Recommendation Request Card",
+            fields = mapOf(
+                "refereeName" to "Professor Aris Thorne, Computer Science",
+                "purpose" to "an application for the Advanced Software Architecture Research Grant",
+                "deadline" to "June 25th",
+                "keyAchievements" to "My core research contributions to clean codebases and highly responsive full-stack MVVM Android applications in Kotlin.",
+                "senderContact" to "Rahul Shah -- senior developer"
+            )
+        )
+        37 -> GenericDocumentData(
+            title = "Resignation Acceptance",
+            fields = mapOf(
+                "employeeName" to "David Vance, junior dev",
+                "acknowledgedDate" to "June 10th",
+                "lastDay" to "June 24th",
+                "transitionNotes" to "Ensure all in-progress features are merged into main branch and write clear readme files explaining the custom modules.",
+                "managerName" to "Rahul Shah, Engineering Manager"
+            )
+        )
+        38 -> GenericDocumentData(
+            title = "Formal Warning Ticket",
+            fields = mapOf(
+                "issuedTo" to "Liam Carter",
+                "dateIssued" to "2026-06-06",
+                "violation" to "Deploying unchecked code changes straight to the release branch three separate times without code reviews.",
+                "consequences" to "Placement on a structured engineering performance improvement program and pairing with a senior review guardian.",
+                "issuedBy" to "Rahul Shah, Supervisor of Core Engineering"
+            )
+        )
+        39 -> GenericDocumentData(
+            title = "Certificate of Appreciation",
+            fields = mapOf(
+                "recipientName" to "Liam Carter",
+                "achievement" to "outstanding quality assurance and rigorous end-to-end regression testing",
+                "presenter" to "Rahul Shah, lead architect",
+                "date" to "June 6th, 2026"
+            )
+        )
+        40 -> GenericDocumentData(
+            title = "Text Flyer / Program Details",
+            fields = mapOf(
+                "headerText" to "Grand Creative Writing Workshop",
+                "details" to "Learn the foundations of narrative architecture, character creation, and editing aesthetics with expert writers.",
+                "time" to "Every Sunday in September from 2:00 PM to 5:00 PM",
+                "location" to "Main Hall, Nexturn Office Suite",
+                "contactInfo" to "email info@nexturn.workspace to reserve your place"
+            )
+        )
+        41 -> GenericDocumentData(
+            title = "Last Will & Testament (Simple)",
+            fields = mapOf(
+                "testatorName" to "Rahul Shah",
+                "executor" to "Trustee Liam Carter",
+                "bequests" to "I bequeath my collection of rare mechanical keyboards and technical design manuals to my closest nephew.",
+                "witnesses" to "Notary Public and Core Workspace Witnesses"
+            )
+        )
+        42 -> GenericDocumentData(
+            title = "Rental & Lease Agreement",
+            fields = mapOf(
+                "landlord" to "Rahul Shah Properties Ltd.",
+                "tenant" to "Jordan Fletcher",
+                "address" to "Suite 404, Aesthetic Towers, District 5",
+                "rentAmount" to "$1,250 a month",
+                "terms" to "A twelve-month fixed-term lease starting on August 1st. Subletting is forbidden without prior written approval."
+            )
+        )
+        43 -> GenericDocumentData(
+            title = "Simple Bill of Sale",
+            fields = mapOf(
+                "seller" to "Rahul Shah",
+                "buyer" to "Alex Avery",
+                "itemDescription" to "Custom Walnut Top Work Desk (60 x 30 inches) with matte black steel framing",
+                "price" to "$450.00 cash",
+                "warrantyDetails" to "Sold strictly in as-is condition. No post-sale refunds or technical guarantees provided."
+            )
+        )
+        44 -> GenericDocumentData(
+            title = "Promissory Note",
+            fields = mapOf(
+                "borrower" to "Alex Avery",
+                "lender" to "Rahul Shah",
+                "principalAmount" to "$5,000.00",
+                "interestRate" to "5.0% simple interest per year",
+                "repaymentSchedule" to "The borrower agrees to pay monthly installments of $500 starting from September 1st until the entire balance is cleared."
+            )
+        )
+        45 -> GenericDocumentData(
+            title = "Business Report Summary",
+            fields = mapOf(
+                "title" to "Nexturn Workspace Q2 Strategic Expansion Report",
+                "author" to "Rahul Shah, CEO & Lead Architect",
+                "executiveSummary" to "An aggressive expansion of offline-first document template categories, paired with edge-to-edge UI spacing and interactive branding assets.",
+                "keyFindings" to "Users reported a 40% increase in productivity when template options were scaled from 24 up to 47 custom styled letter and formal sheets.",
+                "nextSteps" to "Integrate automatic local Room Database backup scheduling and visual PDF styling templates."
+            )
+        )
+        else -> GenericDocumentData(title = "Custom Document")
+    }
+}
+
+@Composable
 fun RenderDynamicForm(selectedTab: Int, viewModel: DocumentViewModel, focusedField: MutableState<String>, highlightIfEmpty: Boolean) {
     val dynamicJsons by viewModel.activeDynamicJsons.collectAsState()
     val customDocs by viewModel.activeCustomDocs.collectAsState()
     
     val json = dynamicJsons[selectedTab] ?: ""
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        when (selectedTab) {
-            11 -> ReferenceLetterForm(ReferenceLetterData.fromJson(json), { viewModel.updateDynamicJson(11, it.toJson()) }, focusedField, highlightIfEmpty)
-            12 -> PurchaseOrderForm(PurchaseOrderData.fromJson(json), { viewModel.updateDynamicJson(12, it.toJson()) }, focusedField, highlightIfEmpty)
-            13 -> QuoteForm(QuoteData.fromJson(json), { viewModel.updateDynamicJson(13, it.toJson()) }, focusedField, highlightIfEmpty)
-            14 -> NdaForm(NdaData.fromJson(json), { viewModel.updateDynamicJson(14, it.toJson()) }, focusedField, highlightIfEmpty)
-            15 -> TimesheetForm(TimesheetData.fromJson(json), { viewModel.updateDynamicJson(15, it.toJson()) }, focusedField, highlightIfEmpty)
-            16 -> ExpenseReportForm(ExpenseReportData.fromJson(json), { viewModel.updateDynamicJson(16, it.toJson()) }, focusedField, highlightIfEmpty)
-            17 -> PressReleaseForm(PressReleaseData.fromJson(json), { viewModel.updateDynamicJson(17, it.toJson()) }, focusedField, highlightIfEmpty)
-            18 -> MemoForm(MemoData.fromJson(json), { viewModel.updateDynamicJson(18, it.toJson()) }, focusedField, highlightIfEmpty)
-            19 -> ThankYouLetterForm(ThankYouLetterData.fromJson(json), { viewModel.updateDynamicJson(19, it.toJson()) }, focusedField, highlightIfEmpty)
-            20 -> AcceptanceLetterForm(AcceptanceLetterData.fromJson(json), { viewModel.updateDynamicJson(20, it.toJson()) }, focusedField, highlightIfEmpty)
-            21 -> TerminationLetterForm(TerminationLetterData.fromJson(json), { viewModel.updateDynamicJson(21, it.toJson()) }, focusedField, highlightIfEmpty)
-            22 -> PerformanceReviewForm(PerformanceReviewData.fromJson(json), { viewModel.updateDynamicJson(22, it.toJson()) }, focusedField, highlightIfEmpty)
-            23 -> CustomDocumentForm(customDocs[23] ?: CustomDocumentData(templateId=23), { viewModel.updateCustomDoc(23) { _ -> it } }, focusedField, highlightIfEmpty)
+        if (selectedTab in 23..45) {
+            val currentData = if (json.isEmpty()) {
+                getDefaultGenericDoc(selectedTab)
+            } else {
+                GenericDocumentData.fromJson(json)
+            }
+            
+            // Loop through default form template keys
+            val defaultDocKeys = getDefaultGenericDoc(selectedTab).fields.keys
+            defaultDocKeys.forEach { key ->
+                val value = currentData.fields[key] ?: ""
+                val label = when (key) {
+                    "recipientName" -> "Recipient Name"
+                    "salutation" -> "Salutation"
+                    "message" -> "Personal Message"
+                    "closing" -> "Closing"
+                    "senderName" -> "Sender Name"
+                    "hostName" -> "Host / Organizer Name"
+                    "eventType" -> "Event Name / Type"
+                    "dateTime" -> "Date & Time"
+                    "location" -> "Location / Venue"
+                    "rsvpContact" -> "RSVP Contact Details"
+                    "specialNotes" -> "Special Instructions"
+                    "reason" -> "Reason"
+                    "resolution" -> "Resolution Plan"
+                    "deceasedName" -> "Deceased Person Name"
+                    "memories" -> "Fond Memories / Condolence Words"
+                    "supportOffer" -> "Offer of Support"
+                    "achievement" -> "Achievement Details"
+                    "pieceTitle" -> "Title"
+                    "authorName" -> "Author Name"
+                    "genre" -> "Genre / Tone"
+                    "content" -> "Content Body Text"
+                    "date" -> "Date / Stamp"
+                    "mood" -> "Mood & Perspective"
+                    "reflection" -> "Personal Journal Reflection"
+                    "gratefulFor" -> "Grateful Elements"
+                    "listTitle" -> "Objective / Title"
+                    "dueDate" -> "Target Due Date"
+                    "storeName" -> "Target Store Name"
+                    "recipeName" -> "Recipe Name"
+                    "prepTime" -> "Prep & Cook Time"
+                    "servings" -> "Yield & Servings"
+                    "instructions" -> "Preparation Steps"
+                    "recipient" -> "Recipient Name"
+                    "gift" -> "Occasion / Gift Description"
+                    "warmMessage" -> "Personal Greeting Message"
+                    "sender" -> "Sender Identity"
+                    "eventName" -> "Event Name"
+                    "responderName" -> "Guest / Responder Name"
+                    "acceptStatus" -> "RSVP Acceptance Status"
+                    "dietaryNeeds" -> "Dietary / Accommodations"
+                    "petitionTitle" -> "Petition Title"
+                    "targetAuthority" -> "Target Governing Authority"
+                    "statement" -> "Petition Accords & Statement"
+                    "initiatorName" -> "Prime Initiator Contact"
+                    "issueDate" -> "Date of Occurrence"
+                    "problemDescription" -> "Problem Report Details"
+                    "desiredOutcome" -> "Expected Resolution"
+                    "senderContact" -> "Your Name & Contact Info"
+                    "refereeName" -> "Professional Referee Name"
+                    "purpose" -> "Applying Program/Agency"
+                    "deadline" -> "Filing Deadline"
+                    "keyAchievements" -> "Key Points to Highlight"
+                    "employeeName" -> "Associate Named"
+                    "acknowledgedDate" -> "Docket Date"
+                    "lastDay" -> "Severance Date"
+                    "transitionNotes" -> "Transition Handover Directives"
+                    "managerName" -> "Manager Signature Authority"
+                    "issuedTo" -> "Subject Party"
+                    "dateIssued" -> "Issuance Date"
+                    "violation" -> "Infraction/Conduct Matters"
+                    "consequences" -> "Future Corrective Measures"
+                    "issuedBy" -> "Supervisor Title"
+                    "presenter" -> "Host Presenter Identity"
+                    "headerText" -> "Display Banner Headline"
+                    "details" -> "Detailed Program Specifications"
+                    "time" -> "Time Period"
+                    "contactInfo" -> "Contact Authority Details"
+                    "testatorName" -> "Your Full Name"
+                    "executor" -> "Appointed Executor"
+                    "bequests" -> "Bequests / Wills Allocations"
+                    "witnesses" -> "Witness Signature Blocks"
+                    "landlord" -> "Lessor (Landlord) Name"
+                    "tenant" -> "Lessee (Tenant) Name"
+                    "address" -> "Asset Real Estate Address"
+                    "rentAmount" -> "Rental Consideration Price"
+                    "terms" -> "Lease Terms & Covenants"
+                    "seller" -> "Seller Name"
+                    "buyer" -> "Buyer Name"
+                    "itemDescription" -> "Sale Asset Description"
+                    "price" -> "Transaction Purchase Price"
+                    "warrantyDetails" -> "Warranty Terms"
+                    "borrower" -> "Borrower Name"
+                    "lender" -> "Lender Name"
+                    "principalAmount" -> "Debt Principal Sum"
+                    "interestRate" -> "Interest Standard %"
+                    "repaymentSchedule" -> "Repayment Plan"
+                    else -> if (key.isNotEmpty()) key[0].uppercaseChar() + key.substring(1) else ""
+                }
+                val isMultiline = key == "message" || key == "specialNotes" || key == "resolution" || key == "memories" || key == "content" || key == "reflection" || key == "instructions" || key == "warmMessage" || key == "statement" || key == "problemDescription" || key == "keyAchievements" || key == "transitionNotes" || key == "consequences" || key == "details" || key == "bequests" || key == "terms" || key == "repaymentSchedule"
+                
+                SmartField(
+                    fieldName = key,
+                    label = label,
+                    placeholder = "Enter $label...",
+                    value = value,
+                    onUpdate = { newVal ->
+                        val nextFields = currentData.fields.toMutableMap().apply { put(key, newVal) }
+                        viewModel.updateDynamicJson(selectedTab, currentData.copy(fields = nextFields).toJson())
+                    },
+                    focusedField = focusedField,
+                    highlightIfEmpty = highlightIfEmpty,
+                    isMultiline = isMultiline
+                )
+            }
+            
+            if (selectedTab == 30 || selectedTab == 31 || selectedTab == 32) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = when(selectedTab) {
+                        32 -> "Ingredients Checklist"
+                        else -> "List Items"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                currentData.listItems.forEachIndexed { idx, itm ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) {
+                            SmartField(
+                                fieldName = "list_item_$idx",
+                                label = "Item #${idx + 1}",
+                                placeholder = "Enter item...",
+                                value = itm,
+                                onUpdate = { newVal ->
+                                    val nextList = currentData.listItems.toMutableList().apply { set(idx, newVal) }
+                                    viewModel.updateDynamicJson(selectedTab, currentData.copy(listItems = nextList).toJson())
+                                },
+                                focusedField = focusedField,
+                                highlightIfEmpty = highlightIfEmpty
+                            )
+                        }
+                        IconButton(onClick = {
+                            val nextList = currentData.listItems.toMutableList().apply { removeAt(idx) }
+                            viewModel.updateDynamicJson(selectedTab, currentData.copy(listItems = nextList).toJson())
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Item")
+                        }
+                    }
+                }
+                Button(
+                    onClick = {
+                        val nextList = currentData.listItems + ""
+                        viewModel.updateDynamicJson(selectedTab, currentData.copy(listItems = nextList).toJson())
+                    },
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Add Item")
+                }
+            }
+        } else {
+            when (selectedTab) {
+                11 -> ReferenceLetterForm(ReferenceLetterData.fromJson(json), { viewModel.updateDynamicJson(11, it.toJson()) }, focusedField, highlightIfEmpty)
+                12 -> PurchaseOrderForm(PurchaseOrderData.fromJson(json), { viewModel.updateDynamicJson(12, it.toJson()) }, focusedField, highlightIfEmpty)
+                13 -> QuoteForm(QuoteData.fromJson(json), { viewModel.updateDynamicJson(13, it.toJson()) }, focusedField, highlightIfEmpty)
+                14 -> NdaForm(NdaData.fromJson(json), { viewModel.updateDynamicJson(14, it.toJson()) }, focusedField, highlightIfEmpty)
+                15 -> TimesheetForm(TimesheetData.fromJson(json), { viewModel.updateDynamicJson(15, it.toJson()) }, focusedField, highlightIfEmpty)
+                16 -> ExpenseReportForm(ExpenseReportData.fromJson(json), { viewModel.updateDynamicJson(16, it.toJson()) }, focusedField, highlightIfEmpty)
+                17 -> PressReleaseForm(PressReleaseData.fromJson(json), { viewModel.updateDynamicJson(17, it.toJson()) }, focusedField, highlightIfEmpty)
+                18 -> MemoForm(MemoData.fromJson(json), { viewModel.updateDynamicJson(18, it.toJson()) }, focusedField, highlightIfEmpty)
+                19 -> ThankYouLetterForm(ThankYouLetterData.fromJson(json), { viewModel.updateDynamicJson(19, it.toJson()) }, focusedField, highlightIfEmpty)
+                20 -> AcceptanceLetterForm(AcceptanceLetterData.fromJson(json), { viewModel.updateDynamicJson(20, it.toJson()) }, focusedField, highlightIfEmpty)
+                21 -> TerminationLetterForm(TerminationLetterData.fromJson(json), { viewModel.updateDynamicJson(21, it.toJson()) }, focusedField, highlightIfEmpty)
+                22 -> PerformanceReviewForm(PerformanceReviewData.fromJson(json), { viewModel.updateDynamicJson(22, it.toJson()) }, focusedField, highlightIfEmpty)
+                46 -> CustomDocumentForm(customDocs[46] ?: CustomDocumentData(templateId=46), { viewModel.updateCustomDoc(46) { _ -> it } }, focusedField, highlightIfEmpty)
+            }
         }
     }
 }
@@ -478,20 +1034,29 @@ fun RenderDynamicPreview(selectedTab: Int, viewModel: DocumentViewModel, activeP
     val json = dynamicJsons[selectedTab] ?: ""
     
     PaperCanvas(paperColor = activePaperColor) {
-        when (selectedTab) {
-            11 -> ReferenceLetterPreview(ReferenceLetterData.fromJson(json))
-            12 -> PurchaseOrderPreview(PurchaseOrderData.fromJson(json))
-            13 -> QuotePreview(QuoteData.fromJson(json))
-            14 -> NdaPreview(NdaData.fromJson(json))
-            15 -> TimesheetPreview(TimesheetData.fromJson(json))
-            16 -> ExpenseReportPreview(ExpenseReportData.fromJson(json))
-            17 -> PressReleasePreview(PressReleaseData.fromJson(json))
-            18 -> MemoPreview(MemoData.fromJson(json))
-            19 -> ThankYouLetterPreview(ThankYouLetterData.fromJson(json))
-            20 -> AcceptanceLetterPreview(AcceptanceLetterData.fromJson(json))
-            21 -> TerminationLetterPreview(TerminationLetterData.fromJson(json))
-            22 -> PerformanceReviewPreview(PerformanceReviewData.fromJson(json))
-            23 -> CustomDocumentPreview(customDocs[23] ?: CustomDocumentData(templateId=23))
+        if (selectedTab in 23..45) {
+            val currentData = if (json.isEmpty()) {
+                getDefaultGenericDoc(selectedTab)
+            } else {
+                GenericDocumentData.fromJson(json)
+            }
+            GenericDocumentPreview(selectedTab, currentData)
+        } else {
+            when (selectedTab) {
+                11 -> ReferenceLetterPreview(ReferenceLetterData.fromJson(json))
+                12 -> PurchaseOrderPreview(PurchaseOrderData.fromJson(json))
+                13 -> QuotePreview(QuoteData.fromJson(json))
+                14 -> NdaPreview(NdaData.fromJson(json))
+                15 -> TimesheetPreview(TimesheetData.fromJson(json))
+                16 -> ExpenseReportPreview(ExpenseReportData.fromJson(json))
+                17 -> PressReleasePreview(PressReleaseData.fromJson(json))
+                18 -> MemoPreview(MemoData.fromJson(json))
+                19 -> ThankYouLetterPreview(ThankYouLetterData.fromJson(json))
+                20 -> AcceptanceLetterPreview(AcceptanceLetterData.fromJson(json))
+                21 -> TerminationLetterPreview(TerminationLetterData.fromJson(json))
+                22 -> PerformanceReviewPreview(PerformanceReviewData.fromJson(json))
+                46 -> CustomDocumentPreview(customDocs[46] ?: CustomDocumentData(templateId=46))
+            }
         }
     }
 }

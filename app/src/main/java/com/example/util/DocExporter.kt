@@ -1518,4 +1518,40 @@ ${data.signatureLinkedIn.ifBlank { "[LinkedIn]" }}
         }
         context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Batch Export"))
     }
+
+    // Direct public export to the device's main Downloads directory
+    fun exportToPublicDownloads(context: Context, file: File, mimeType: String): File? {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                val resolver = context.contentResolver
+                val contentValues = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                }
+                val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { outputStream ->
+                        FileInputStream(file).use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    }
+                    return File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), file.name)
+                }
+            } else {
+                val destDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                if (!destDir.exists()) destDir.mkdirs()
+                val destFile = File(destDir, file.name)
+                FileOutputStream(destFile).use { outputStream ->
+                    FileInputStream(file).use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                return destFile
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
 }
