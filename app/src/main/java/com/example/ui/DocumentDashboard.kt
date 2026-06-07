@@ -385,7 +385,13 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
         Pair("Cool Blue Ash", Color(0xFFF2F4F7)),
         Pair("Sage Mint", Color(0xFFEDF6F0)),
         Pair("Romantic Rose", Color(0xFFFFF5F7)),
-        Pair("Pencil Graphite", Color(0xFFF7F7F8))
+        Pair("Pencil Graphite", Color(0xFFF7F7F8)),
+        Pair("Royal Ivory", Color(0xFFFFFDF5)),
+        Pair("Parchment Tan", Color(0xFFFBF4E6)),
+        Pair("Sunset Lavender", Color(0xFFFAF5FF)),
+        Pair("Soft Slate", Color(0xFFEBEFF5)),
+        Pair("Mint Greenery", Color(0xFFEDFBF0)),
+        Pair("Soft Charcoal", Color(0xFF26262B))
     )
     val activePaperColor = paperColors.getOrElse(paperIndex) { Pair("Classic White", Color(0xFFFFFFFF)) }.second
 
@@ -584,6 +590,32 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                                 Spacer(modifier = Modifier.height(10.dp))
                             }
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    PhotoAttachmentCard(viewModel)
+                                }
+                                Button(
+                                    onClick = { 
+                                        viewModel.autofillActiveDocumentFromProfile(selectedTab)
+                                        Toast.makeText(context, "Filled form empty fields from profile!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.height(56.dp)
+                                ) {
+                                    Icon(Icons.Filled.AutoFixHigh, contentDescription = "Autofill fields from profile")
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Autofill", style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
+
                             // Render Selected Form
                             Box(modifier = Modifier.weight(1f)) {
                                 if (selectedTab < 11) {
@@ -636,7 +668,7 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             Box(modifier = Modifier.weight(1f)) {
                                 CompositionLocalProvider(LocalDocumentStyleConfig provides styleConfig) {
                                 if (selectedTab < 11) {
-                                    RenderActivePreview(selectedTab, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
+                                    RenderActivePreview(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
                                         focusedField.value = clickedFieldName
                                     }
                                 } else {
@@ -658,6 +690,33 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                                 PromptBox(title = activePromptTitle, prompt = activePromptText)
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    PhotoAttachmentCard(viewModel)
+                                }
+                                Button(
+                                    onClick = { 
+                                        viewModel.autofillActiveDocumentFromProfile(selectedTab)
+                                        Toast.makeText(context, "Filled form empty fields from profile!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.height(56.dp)
+                                ) {
+                                    Icon(Icons.Filled.AutoFixHigh, contentDescription = "Autofill fields from profile")
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Autofill", style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
+
                             Box(modifier = Modifier.weight(1f)) {
                                 if (selectedTab < 11) {
                                     RenderActiveForm(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, focusedField, highlightIfEmpty)
@@ -681,6 +740,10 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                TextButton(onClick = { triggerFileAction("PDF", "download") }) {
+                                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Text("Export PDF", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
+                                }
                                 TextButton(onClick = { triggerFileAction("PDF", "share") }) {
                                     Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Text("Share", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
@@ -702,7 +765,7 @@ fun NexturnDashboard(viewModel: DocumentViewModel) {
                             Box(modifier = Modifier.weight(1f)) {
                                 CompositionLocalProvider(LocalDocumentStyleConfig provides styleConfig) {
                                     if (selectedTab < 11) {
-                                        RenderActivePreview(selectedTab, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
+                                        RenderActivePreview(selectedTab, viewModel, cvData, coverLetterData, emailData, invoiceData, proposalData, offerLetterData, resignationLetterData, serviceContractData, certificateData, meetingMinutesData, businessLetterData, activePaperColor) { clickedFieldName ->
                                             focusedField.value = clickedFieldName
                                             compactModePane = 0 // Switch back to form so they can type instantly!
                                         }
@@ -831,6 +894,7 @@ fun RenderActiveForm(
 @Composable
 fun RenderActivePreview(
     selectedTab: Int,
+    viewModel: DocumentViewModel,
     cvData: CvData,
     coverLetterData: CoverLetterData,
     emailData: EmailData,
@@ -845,9 +909,12 @@ fun RenderActivePreview(
     paperColor: Color,
     onNavigateToField: (String) -> Unit
 ) {
+    val photoUri by viewModel.attachedPhotoUri.collectAsState()
+    val photoSize by viewModel.attachedPhotoSize.collectAsState()
+
     when (selectedTab) {
-        0 -> CvDocumentPreview(cvData, paperColor, onNavigateToField)
-        1 -> CoverLetterDocumentPreview(coverLetterData, paperColor, onNavigateToField)
+        0 -> CvDocumentPreview(cvData, paperColor, onNavigateToField, photoUri, photoSize)
+        1 -> CoverLetterDocumentPreview(coverLetterData, paperColor, onNavigateToField, photoUri, photoSize)
         2 -> EmailDocumentPreview(emailData, paperColor, onNavigateToField)
         3 -> InvoiceDocumentPreview(invoiceData, paperColor, onNavigateToField)
         4 -> ProposalDocumentPreview(proposalData, paperColor, onNavigateToField)
@@ -1280,6 +1347,8 @@ fun DashboardDrawerContent(
     onTabSelected: (Int) -> Unit,
     onCloseDrawer: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     val selectedThemeIndex by viewModel.selectedThemeIndex.collectAsStateWithLifecycle()
     val isDark by viewModel.isDarkTheme.collectAsStateWithLifecycle()
     val paperIndex by viewModel.selectedPaperIndex.collectAsStateWithLifecycle()
@@ -1305,6 +1374,30 @@ fun DashboardDrawerContent(
     ) { uri ->
         if (uri != null) {
             viewModel.setWatermarkImageUri(uri.toString())
+        }
+    }
+
+    val fontLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream != null) {
+                    val fontFile = java.io.File(context.filesDir, "imported_font_${System.currentTimeMillis()}.ttf")
+                    val outputStream = java.io.FileOutputStream(fontFile)
+                    val buffer = ByteArray(1024)
+                    var bytesRead: Int
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    inputStream.close()
+                    outputStream.close()
+                    viewModel.setCustomFontFamily(fontFile.absolutePath)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -1355,8 +1448,6 @@ fun DashboardDrawerContent(
     val businessLetterTemplates by viewModel.savedBusinessLetterTemplates.collectAsStateWithLifecycle()
     val curBusinessLetterTemplateName by viewModel.curBusinessLetterTemplateName.collectAsStateWithLifecycle()
 
-    val context = androidx.compose.ui.platform.LocalContext.current
-
     val themes = listOf(
         Triple("Lavender Mint", "🌸", if (isDark) LavenderDarkPrimary else LavenderLightPrimary),
         Triple("Peach Cream", "🍑", if (isDark) PeachDarkPrimary else PeachLightPrimary),
@@ -1375,7 +1466,13 @@ fun DashboardDrawerContent(
         Triple("Cool Blue Ash", "❄️", Color(0xFFF2F4F7)),
         Triple("Sage Mint", "🍃", Color(0xFFEDF6F0)),
         Triple("Romantic Rose", "🌸", Color(0xFFFFF5F7)),
-        Triple("Pencil Graphite", "✏️", Color(0xFFF7F7F8))
+        Triple("Pencil Graphite", "✏️", Color(0xFFF7F7F8)),
+        Triple("Royal Ivory", "👑", Color(0xFFFFFDF5)),
+        Triple("Parchment Tan", "📜", Color(0xFFFBF4E6)),
+        Triple("Sunset Lavender", "🪻", Color(0xFFFAF5FF)),
+        Triple("Soft Slate", "🪨", Color(0xFFEBEFF5)),
+        Triple("Mint Greenery", "🌱", Color(0xFFEDFBF0)),
+        Triple("Soft Charcoal", "🖤", Color(0xFF26262B))
     )
 
     ModalDrawerSheet(
@@ -1541,6 +1638,9 @@ fun DashboardDrawerContent(
                 Triple(43, "Simple Bill of Sale", Icons.Default.Handshake),
                 Triple(44, "Promissory Note", Icons.Default.MonetizationOn),
                 Triple(45, "Business Report Summary", Icons.Default.PieChart),
+                Triple(47, "Medical Certificate / Sick Note", Icons.Default.Favorite),
+                Triple(48, "Consent Form", Icons.Default.Handshake),
+                Triple(49, "Letter of Intent", Icons.Default.HistoryEdu),
                 Triple(46, "Custom Layout", Icons.Default.Build)
             )
 
@@ -1732,90 +1832,7 @@ fun DashboardDrawerContent(
                         }
                     )
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // List of saved templates
-                var searchQuery by remember { mutableStateOf("") }
-                
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Saved $curDocTypeName Presets:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 6.dp).weight(1f)
-                    )
-                    if (currentTypeList.isNotEmpty()) {
-                        IconButton(onClick = { DocExporter.batchExport(context, currentTypeList, "PDF") }, modifier = Modifier.size(24.dp)) {
-                            Icon(Icons.Default.Archive, contentDescription = "Batch Export", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                        }
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search & filter...", style = MaterialTheme.typography.labelSmall) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp).padding(bottom = 6.dp),
-                    textStyle = MaterialTheme.typography.bodySmall,
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                )
-
-                val filteredList = currentTypeList.filter { it.name.contains(searchQuery, ignoreCase = true) }
-
-                if (filteredList.isEmpty()) {
-                    Text(
-                        text = "No saved presets yet.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                    )
-                } else {
-                    filteredList.forEach { template ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp)
-                                .background(
-                                    if (curTemplateName == template.name) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    if (curTemplateName == template.name) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                                    else Color.Transparent,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable {
-                                    viewModel.loadTemplate(template)
-                                    onCloseDrawer()
-                                }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = template.name,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                onClick = { viewModel.deleteTemplate(template.id) },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(6.dp))
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
@@ -2054,7 +2071,7 @@ fun DashboardDrawerContent(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text("Column Layout:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(4.dp))
-                    listOf("Sidebar Layout", "Single Column").forEach { ly ->
+                    listOf("Sidebar Layout", "Single Column", "Right Sidebar Layout", "Three-Column Layout", "Modern Split Layout").forEach { ly ->
                         val isLySelected = activeCv.layout == ly
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -2542,7 +2559,37 @@ fun DashboardDrawerContent(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (customFontFamilyState != "Default" && customFontFamilyState != "Serif" && customFontFamilyState != "Monospace" && customFontFamilyState != "Cursive") {
+                    val fontName = customFontFamilyState.substringAfterLast("/")
+                    Text(
+                        text = "Active Import Font: $fontName",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
+
+                Button(
+                    onClick = { fontLauncher.launch("*/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Import Custom Font File (.ttf/.otf)", style = MaterialTheme.typography.labelSmall)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Bold / Italic modifiers
                 Row(

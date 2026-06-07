@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import com.example.data.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,16 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 
 @Composable
 fun SmartField(
@@ -1022,6 +1034,9 @@ fun RenderDynamicForm(selectedTab: Int, viewModel: DocumentViewModel, focusedFie
                 21 -> TerminationLetterForm(TerminationLetterData.fromJson(json), { viewModel.updateDynamicJson(21, it.toJson()) }, focusedField, highlightIfEmpty)
                 22 -> PerformanceReviewForm(PerformanceReviewData.fromJson(json), { viewModel.updateDynamicJson(22, it.toJson()) }, focusedField, highlightIfEmpty)
                 46 -> CustomDocumentForm(customDocs[46] ?: CustomDocumentData(templateId=46), { viewModel.updateCustomDoc(46) { _ -> it } }, focusedField, highlightIfEmpty)
+                47 -> MedicalCertificateForm(MedicalCertificateData.fromJson(json), { viewModel.updateDynamicJson(47, it.toJson()) }, focusedField, highlightIfEmpty)
+                48 -> ConsentFormForm(ConsentFormData.fromJson(json), { viewModel.updateDynamicJson(48, it.toJson()) }, focusedField, highlightIfEmpty)
+                49 -> LetterOfIntentForm(LetterOfIntentData.fromJson(json), { viewModel.updateDynamicJson(49, it.toJson()) }, focusedField, highlightIfEmpty)
             }
         }
     }
@@ -1056,6 +1071,9 @@ fun RenderDynamicPreview(selectedTab: Int, viewModel: DocumentViewModel, activeP
                 21 -> TerminationLetterPreview(TerminationLetterData.fromJson(json))
                 22 -> PerformanceReviewPreview(PerformanceReviewData.fromJson(json))
                 46 -> CustomDocumentPreview(customDocs[46] ?: CustomDocumentData(templateId=46))
+                47 -> MedicalCertificatePreview(MedicalCertificateData.fromJson(json))
+                48 -> ConsentFormPreview(ConsentFormData.fromJson(json))
+                49 -> LetterOfIntentPreview(LetterOfIntentData.fromJson(json))
             }
         }
     }
@@ -1066,6 +1084,22 @@ fun RenderDynamicPreview(selectedTab: Int, viewModel: DocumentViewModel, activeP
 fun UserProfileDialog(viewModel: DocumentViewModel, onDismiss: () -> Unit) {
     val profile by viewModel.userProfile.collectAsState()
     val focusedField = remember { mutableStateOf("") }
+    val context = LocalContext.current
+    
+    val photoUri = profile.logoUri ?: ""
+    val pickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            if (uri != null) {
+                try {
+                    val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    context.contentResolver.takePersistableUriPermission(uri, flag)
+                } catch (_: Exception) {}
+                viewModel.saveUserProfile(profile.copy(logoUri = uri.toString()))
+                viewModel.setAttachedPhotoUri(uri.toString())
+            }
+        }
+    )
     
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
@@ -1073,20 +1107,124 @@ fun UserProfileDialog(viewModel: DocumentViewModel, onDismiss: () -> Unit) {
                 Text("Your Saved Profile", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("This profile is automatically applied/suggested across all documents.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
+                
+                // Photo customization section inside user profile dialog!
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Profile Photo & Signature Stamp", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+                                    .background(Color.White)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (photoUri.isNotEmpty()) {
+                                    if (photoUri.startsWith("preset_")) {
+                                        RenderPresetAvatar(
+                                            presetType = photoUri,
+                                            sizeClass = "Passport",
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    } else {
+                                        coil.compose.AsyncImage(
+                                            model = photoUri,
+                                            contentDescription = "Profile Photo",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                        )
+                                    }
+                                } else {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+                                }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Select Profile Avatar Source:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.height(4.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Button(
+                                        onClick = {
+                                            pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(26.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                    ) {
+                                        Text("Import Photo", fontSize = 10.sp)
+                                    }
+                                    if (photoUri.isNotEmpty()) {
+                                        OutlinedButton(
+                                            onClick = { 
+                                                viewModel.saveUserProfile(profile.copy(logoUri = null))
+                                                viewModel.setAttachedPhotoUri("")
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                            modifier = Modifier.height(26.dp),
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                                        ) {
+                                            Text("Clear", fontSize = 10.sp, color = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        Text("Or select quick avatar template:", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Spacer(Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            val presets = listOf(
+                                "preset_blue_scholar" to "Scholar [Blue]",
+                                "preset_gray_executive" to "Exec [Gray]",
+                                "preset_orange_designer" to "Design [Orange]",
+                                "preset_green_leader" to "Lead [Green]"
+                            )
+                            presets.forEach { (preset, labelStr) ->
+                                val isSelected = photoUri == preset
+                                Surface(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(24.dp)
+                                        .clickable { 
+                                            viewModel.saveUserProfile(profile.copy(logoUri = preset))
+                                            viewModel.setAttachedPhotoUri(preset)
+                                        },
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    border = BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(labelStr, style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 1)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 LazyColumn(Modifier.weight(1f, fill=false)) {
                     item {
-                        SmartField("pro_name", "Name", "e.g. John Doe", profile.name, { viewModel.saveUserProfile(profile.copy(name = it)) }, focusedField, false)
-                        SmartField("pro_company", "Company Name", "e.g. Acme Corp", profile.companyName, { viewModel.saveUserProfile(profile.copy(companyName = it)) }, focusedField, false)
-                        SmartField("pro_address", "Address", "e.g. 123 Main St", profile.address, { viewModel.saveUserProfile(profile.copy(address = it)) }, focusedField, false, isMultiline = true)
-                        SmartField("pro_phone", "Phone", "e.g. +1 555-0100", profile.phone, { viewModel.saveUserProfile(profile.copy(phone = it)) }, focusedField, false)
-                        SmartField("pro_email", "Email", "e.g. john@example.com", profile.email, { viewModel.saveUserProfile(profile.copy(email = it)) }, focusedField, false)
-                        SmartField("pro_tax", "Tax ID", "e.g. AB1234567", profile.taxId, { viewModel.saveUserProfile(profile.copy(taxId = it)) }, focusedField, false)
+                        SmartField("pro_name", "Author/Employee Name", "e.g. John Doe", profile.name, { viewModel.saveUserProfile(profile.copy(name = it)) }, focusedField, false)
+                        SmartField("pro_company", "Organization/Company Name", "e.g. Acme Corp", profile.companyName, { viewModel.saveUserProfile(profile.copy(companyName = it)) }, focusedField, false)
+                        SmartField("pro_address", "Address Block", "e.g. 123 Main St", profile.address, { viewModel.saveUserProfile(profile.copy(address = it)) }, focusedField, false, isMultiline = true)
+                        SmartField("pro_phone", "Contact Phone", "e.g. +1 555-0100", profile.phone, { viewModel.saveUserProfile(profile.copy(phone = it)) }, focusedField, false)
+                        SmartField("pro_email", "Email Address", "e.g. john@example.com", profile.email, { viewModel.saveUserProfile(profile.copy(email = it)) }, focusedField, false)
+                        SmartField("pro_tax", "Registration / Tax ID", "e.g. AB1234567", profile.taxId, { viewModel.saveUserProfile(profile.copy(taxId = it)) }, focusedField, false)
                     }
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                    Text("Close & Save")
+                    Text("Close & Save Profile")
                 }
             }
         }
@@ -1133,3 +1271,263 @@ fun CustomDocumentPreview(data: CustomDocumentData) {
         }
     }
 }
+
+@Composable
+fun MedicalCertificateForm(data: MedicalCertificateData, onUpdate: (MedicalCertificateData) -> Unit, focusedField: MutableState<String>, highlightIfEmpty: Boolean) {
+    SmartField("patientName", "Patient Name", "[Full Name of Patient]", data.patientName, { onUpdate(data.copy(patientName = it)) }, focusedField, highlightIfEmpty)
+    SmartField("date", "Certificate Date", "e.g. June 7, 2026", data.date, { onUpdate(data.copy(date = it)) }, focusedField, highlightIfEmpty)
+    SmartField("diagnosis", "Diagnosis / Reason (Optional)", "e.g. Acute Pharyngitis", data.diagnosis, { onUpdate(data.copy(diagnosis = it)) }, focusedField, false)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(Modifier.weight(1f)) {
+            SmartField("recommendedTimeOffFrom", "Excused From (Date)", "e.g. 2026-06-07", data.recommendedTimeOffFrom, { onUpdate(data.copy(recommendedTimeOffFrom = it)) }, focusedField, highlightIfEmpty)
+        }
+        Box(Modifier.weight(1f)) {
+            SmartField("recommendedTimeOffTo", "Excused To (Date)", "e.g. 2026-06-09", data.recommendedTimeOffTo, { onUpdate(data.copy(recommendedTimeOffTo = it)) }, focusedField, highlightIfEmpty)
+        }
+    }
+    SmartField("doctorName", "Doctor Name & Designation", "e.g. Dr. Arthur Conan, MD", data.doctorName, { onUpdate(data.copy(doctorName = it)) }, focusedField, highlightIfEmpty)
+    SmartField("clinicStampText", "Clinic Stamp Placeholder Text", "e.g. METRO CLINICAL CENTER", data.clinicStampText, { onUpdate(data.copy(clinicStampText = it)) }, focusedField, false)
+}
+
+@Composable
+fun MedicalCertificatePreview(data: MedicalCertificateData) {
+    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        // Clinical Letterhead header
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Text(data.clinicStampText.uppercase().ifBlank { "MEDICAL CLINICAL CENTER" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Official Medical Practitioner Certification & Attestation", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Spacer(modifier = Modifier.height(6.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.primary, thickness = 2.dp)
+        }
+        
+        Text("MEDICAL CERTIFICATE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color.DarkGray, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 16.dp))
+        
+        Text("Date of Issuance: ${data.date.ifBlank { "[Date of Issue]" }}", fontSize = 10.sp, color = Color.DarkGray, modifier = Modifier.padding(bottom = 12.dp))
+        
+        Text(
+            text = "This is to certify that I have professionally examined and/or treated the patient named below:",
+            fontSize = 11.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            border = BorderStroke(0.5.dp, Color.LightGray)
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Patient Name:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.Gray)
+                    Text(data.patientName.ifBlank { "[Patient Full Name]" }, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, color = Color.Black)
+                }
+                if (data.diagnosis.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Diagnosis/Medical Condition:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.Gray)
+                        Text(data.diagnosis, fontWeight = FontWeight.Normal, fontSize = 11.sp, color = Color.Black)
+                    }
+                }
+            }
+        }
+        
+        Text(
+            text = "Based on clinical findings, the patient is advised and recommended to rest and be excused from all duties, classes, and standard instruction from ${data.recommendedTimeOffFrom.ifBlank { "[Start Date]" }} to ${data.recommendedTimeOffTo.ifBlank { "[End Date]" }} inclusive.",
+            fontSize = 11.sp,
+            color = Color.Black,
+            lineHeight = 16.sp,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            // Clinic stamp placeholder
+            Box(
+                modifier = Modifier
+                    .size(90.dp, 55.dp)
+                    .border(1.dp, Color.Red.copy(alpha = 0.4f), RoundedCornerShape(2.dp))
+                    .padding(4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(data.clinicStampText.ifBlank { "OFFICIAL CLINIC" }, fontSize = 6.sp, color = Color.Red, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Text("STAMP PLACEHOLDER", fontSize = 5.sp, color = Color.Red.copy(alpha = 0.8f))
+                    Text("VERIFIED CERTIFICATE", fontSize = 5.sp, color = Color.Red)
+                }
+            }
+            
+            // Signature line
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(modifier = Modifier.width(140.dp).height(1.dp).background(Color.DarkGray))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(data.doctorName.ifBlank { "[Doctor Name & Designation]" }, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("Authorizing Medical Practitioner", fontSize = 8.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+fun ConsentFormForm(data: ConsentFormData, onUpdate: (ConsentFormData) -> Unit, focusedField: MutableState<String>, highlightIfEmpty: Boolean) {
+    SmartField("organizationName", "Organization Name", "e.g. Nexturn Studios Inc.", data.organizationName, { onUpdate(data.copy(organizationName = it)) }, focusedField, highlightIfEmpty)
+    SmartField("participantName", "Participant Name (Parent/Guardian)", "e.g. Robert Shah", data.participantName, { onUpdate(data.copy(participantName = it)) }, focusedField, highlightIfEmpty)
+    SmartField("activityEvent", "Activity / Event Title", "e.g. Professional Portrait Photoshoot", data.activityEvent, { onUpdate(data.copy(activityEvent = it)) }, focusedField, highlightIfEmpty)
+    SmartField("consentStatement", "Consent Statement", "[Formal Consent Terms]", data.consentStatement, { onUpdate(data.copy(consentStatement = it)) }, focusedField, highlightIfEmpty, isMultiline = true)
+    SmartField("signatureLine", "Authorized Signee Name", "e.g. Robert Shah", data.signatureLine, { onUpdate(data.copy(signatureLine = it)) }, focusedField, highlightIfEmpty)
+    SmartField("date", "Consent Date", "e.g. June 7, 2026", data.date, { onUpdate(data.copy(date = it)) }, focusedField, highlightIfEmpty)
+    
+    Text("Risks Acknowledged / Covenants", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+    data.risksAcknowledged.forEachIndexed { index, risk ->
+        Row(Modifier.fillMaxWidth()) {
+            Box(Modifier.weight(1f)) {
+                SmartField("risk_$index", "Risk/Condition #${index+1}", "e.g. Voluntarily participating in offsite project physical tasks", risk, { newStr ->
+                    val newList = data.risksAcknowledged.toMutableList().apply { set(index, newStr) }
+                    onUpdate(data.copy(risksAcknowledged = newList))
+                }, focusedField, false)
+            }
+            IconButton(onClick = {
+                val newList = data.risksAcknowledged.toMutableList().apply { removeAt(index) }
+                onUpdate(data.copy(risksAcknowledged = newList))
+            }) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+        }
+    }
+    Button(onClick = { onUpdate(data.copy(risksAcknowledged = data.risksAcknowledged + "")) }) { Text("Add Risk Acknowledged") }
+}
+
+@Composable
+fun ConsentFormPreview(data: ConsentFormData) {
+    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+        ) {
+            Text(data.organizationName.uppercase().ifBlank { "[ORGANIZATION NAME]" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Release of Liability & Mutual Consent Covenant", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Spacer(modifier = Modifier.height(4.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.primary, thickness = 1.dp)
+        }
+        
+        Text("PARTICIPANT CONSENT & WAIVER", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.DarkGray, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp))
+        
+        Text("Activity/Event Name: ${data.activityEvent.ifBlank { "[Activity or Event Name]" }}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text("I, the undersigned participant (or legal parent/guardian of participant), ${data.participantName.ifBlank { "[Participant Name]" }}, hereby certify and consent to formal participation with ${data.organizationName.ifBlank { "[Organization Name]" }}.", fontSize = 11.sp, color = Color.Black, lineHeight = 16.sp)
+        
+        if (data.risksAcknowledged.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("ACKNOWLEDGMENT OF ASSOCIATED RISK FACTORS:", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+            data.risksAcknowledged.forEach { risk ->
+                if (risk.isNotBlank()) {
+                    Text("• $risk", fontSize = 10.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 8.dp, top = 2.dp), lineHeight = 14.sp)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("CONSENT STATEMENTS & RELEASES:", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+        Text(data.consentStatement.ifBlank { "The physical participant confirms complete waiver of claims and agrees to yield general photographic and physical liability during standard scheduled actions of the event." }, fontSize = 10.sp, color = Color.Black, lineHeight = 14.sp)
+        
+        Spacer(modifier = Modifier.height(30.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(modifier = Modifier.width(140.dp).height(1.dp).background(Color.DarkGray))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(data.signatureLine.ifBlank { "[Acknowledge Signature Name]" }, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("Participant / Guardian Signature", fontSize = 8.sp, color = Color.Gray)
+            }
+            
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(modifier = Modifier.width(100.dp).height(1.dp).background(Color.DarkGray))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(data.date.ifBlank { "[Date]" }, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("Date Signed", fontSize = 8.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+fun LetterOfIntentForm(data: LetterOfIntentData, onUpdate: (LetterOfIntentData) -> Unit, focusedField: MutableState<String>, highlightIfEmpty: Boolean) {
+    SmartField("recipient", "To (Admissions/Manager)", "e.g. University Admissions Committee", data.recipient, { onUpdate(data.copy(recipient = it)) }, focusedField, highlightIfEmpty)
+    SmartField("sender", "From (Applicant Name)", "e.g. Rahul Shah", data.sender, { onUpdate(data.copy(sender = it)) }, focusedField, highlightIfEmpty)
+    SmartField("programPosition", "Program / Position Desired", "e.g. MS in Advanced Computer Science", data.programPosition, { onUpdate(data.copy(programPosition = it)) }, focusedField, highlightIfEmpty)
+    SmartField("whyInterested", "Why I Am Interested (Paragraph)", "Explain your core motivation and career goals...", data.whyInterested, { onUpdate(data.copy(whyInterested = it)) }, focusedField, highlightIfEmpty, isMultiline = true)
+    SmartField("closing", "Closing & Salutation", "e.g. Respectfully Yours,", data.closing, { onUpdate(data.copy(closing = it)) }, focusedField, highlightIfEmpty)
+    SmartField("signature", "Applicant Name Signing", "e.g. Rahul Shah", data.signature, { onUpdate(data.copy(signature = it)) }, focusedField, highlightIfEmpty)
+    
+    Text("Why I Am A Good Fit (Bullet Points)", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+    data.whyGoodFitBullets.forEachIndexed { index, bullet ->
+        Row(Modifier.fillMaxWidth()) {
+            Box(Modifier.weight(1f)) {
+                SmartField("bullet_$index", "Qualification Bullet #${index+1}", "e.g. 3 years of hands-on Compose UI design experience", bullet, { newStr ->
+                    val newList = data.whyGoodFitBullets.toMutableList().apply { set(index, newStr) }
+                    onUpdate(data.copy(whyGoodFitBullets = newList))
+                }, focusedField, false)
+            }
+            IconButton(onClick = {
+                val newList = data.whyGoodFitBullets.toMutableList().apply { removeAt(index) }
+                onUpdate(data.copy(whyGoodFitBullets = newList))
+            }) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+        }
+    }
+    Button(onClick = { onUpdate(data.copy(whyGoodFitBullets = data.whyGoodFitBullets + "")) }) { Text("Add Qualification Bullet") }
+}
+
+@Composable
+fun LetterOfIntentPreview(data: LetterOfIntentData) {
+    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column {
+                Text("LETTER OF INTENT", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Formal Expression of Career & Academic Goals", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text("FOR: ${data.recipient.ifBlank { "[Recipient or Admissions Authority]" }}", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text("FROM: ${data.sender.ifBlank { "[Applicant Full Name]" }}", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text("POSITION/PROGRAM: ${data.programPosition.ifBlank { "[Program/Position Name]" }}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
+        
+        Spacer(modifier = Modifier.height(14.dp))
+        Text("PROSPECTIVE INTENT STATEMENT & BACKGROUND:", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+        Text(data.whyInterested.ifBlank { "Please write your core interests and personal drive towards joining this prestigious organization or academic curriculum." }, fontSize = 11.sp, color = Color.Black, lineHeight = 16.sp)
+        
+        if (data.whyGoodFitBullets.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Text("WHY I AM THE PERFECT FIT / QUALIFICATIONS HIGHLIGHTS:", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+            data.whyGoodFitBullets.forEach { item ->
+                if (item.isNotBlank()) {
+                    Text("• $item", fontSize = 10.sp, color = Color.Black, modifier = Modifier.padding(start = 8.dp, top = 2.dp), lineHeight = 14.sp)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(data.closing.ifBlank { "Respectfully Yours," }, fontSize = 11.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(18.dp))
+        
+        Column {
+            Box(modifier = Modifier.width(140.dp).height(1.dp).background(Color.DarkGray))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(data.signature.ifBlank { "[Applicant Signature Name]" }, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("Candidacy Applicant Author", fontSize = 8.sp, color = Color.Gray)
+        }
+    }
+}
+

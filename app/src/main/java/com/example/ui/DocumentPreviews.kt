@@ -85,7 +85,19 @@ fun PaperCanvas(
             "Serif" -> androidx.compose.ui.text.font.FontFamily.Serif
             "Monospace" -> androidx.compose.ui.text.font.FontFamily.Monospace
             "Cursive" -> androidx.compose.ui.text.font.FontFamily.Cursive
-            else -> androidx.compose.ui.text.font.FontFamily.Default
+            "Default" -> androidx.compose.ui.text.font.FontFamily.Default
+            else -> {
+                try {
+                    val file = java.io.File(styleConfig.customFontFamily)
+                    if (file.exists()) {
+                        androidx.compose.ui.text.font.FontFamily(androidx.compose.ui.text.font.Font(file))
+                    } else {
+                        androidx.compose.ui.text.font.FontFamily.Default
+                    }
+                } catch (e: Exception) {
+                    androidx.compose.ui.text.font.FontFamily.Default
+                }
+            }
         }
     } else {
         androidx.compose.ui.text.font.FontFamily.Default
@@ -259,7 +271,9 @@ fun ClickablePlaceholder(
 fun CvDocumentPreview(
     data: CvData,
     paperColor: Color = Color.White,
-    onNavigateToField: (String) -> Unit
+    onNavigateToField: (String) -> Unit,
+    photoUri: String = "",
+    photoSize: String = ""
 ) {
     val dateStamp = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
@@ -278,176 +292,469 @@ fun CvDocumentPreview(
     }
 
     PaperCanvas(paperColor = paperColor) {
-        // STYLE & LAYOUT: As requested, support Sidebar vs Single Column
-        if (data.layout == "Sidebar Layout") {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                // LEFT SIDEBAR (Contacts, Skills)
-                Column(
-                    modifier = Modifier
-                        .weight(0.35f)
-                        .background(sidebarBg, RoundedCornerShape(4.dp))
-                        .padding(12.dp)
-                ) {
-                    Text("CONTACT INFO", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    if (data.email.isNotBlank()) Text(data.email, fontSize = 9.sp, color = Color.Black)
-                    if (data.phone.isNotBlank()) Text(data.phone, fontSize = 9.sp, color = Color.Black)
-                    if (data.location.isNotBlank()) Text(data.location, fontSize = 9.sp, color = Color.Black)
-                    if (data.portfolioUrl.isNotBlank()) Text(data.portfolioUrl, fontSize = 9.sp, color = Color(0xFF0D47A1))
-                    
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text("TECHNICAL SKILLS", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
-                    if (data.technicalSkills.isEmpty()) {
-                        ClickablePlaceholder("[+ Click here to add skills]", "technicalSkills", onNavigateToField)
-                    } else {
-                        data.technicalSkills.forEach {
-                            Text("• ${it.name} (${it.proficiency})", fontSize = 9.sp, color = Color.DarkGray)
+        // STYLE & LAYOUT: As requested, support Sidebar, Single Column, Right Sidebar, Three-Column, and Modern Split
+        when (data.layout) {
+            "Sidebar Layout" -> {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // LEFT SIDEBAR (Contacts, Skills)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.35f)
+                            .background(sidebarBg, RoundedCornerShape(4.dp))
+                            .padding(12.dp)
+                    ) {
+                        if (photoUri.isNotEmpty()) {
+                            RenderAttachedPhotoOnPreview(
+                                photoUri = photoUri,
+                                photoSize = photoSize,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 12.dp)
+                            )
                         }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
-                    if (data.languages.isEmpty()) {
-                        ClickablePlaceholder("[+ Add languages]", "languages", onNavigateToField)
-                    } else {
-                        data.languages.forEach {
-                            Text("• ${it.language}: ${it.proficiency}", fontSize = 9.sp, color = Color.DarkGray)
+                        Text("CONTACT INFO", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (data.email.isNotBlank()) Text(data.email, fontSize = 9.sp, color = Color.Black)
+                        if (data.phone.isNotBlank()) Text(data.phone, fontSize = 9.sp, color = Color.Black)
+                        if (data.location.isNotBlank()) Text(data.location, fontSize = 9.sp, color = Color.Black)
+                        if (data.portfolioUrl.isNotBlank()) Text(data.portfolioUrl, fontSize = 9.sp, color = Color(0xFF0D47A1))
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("TECHNICAL SKILLS", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.technicalSkills.isEmpty()) {
+                            ClickablePlaceholder("[+ Click here to add skills]", "technicalSkills", onNavigateToField)
+                        } else {
+                            data.technicalSkills.forEach {
+                                Text("• ${it.name} (${it.proficiency})", fontSize = 9.sp, color = Color.DarkGray)
+                            }
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // RIGHT COLUMN: Main Experience
-                Column(modifier = Modifier.weight(0.65f)) {
-                    // Header
-                    if (data.fullName.isBlank()) {
-                        ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
-                    } else {
-                        Text(data.fullName, style = MaterialTheme.typography.headlineSmall, color = themeColor, fontWeight = FontWeight.Bold)
-                    }
-                    if (data.jobTitle.isBlank()) {
-                        ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
-                    } else {
-                        Text(data.jobTitle, style = MaterialTheme.typography.titleMedium, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    if (data.professionalSummary.isBlank()) {
-                        ClickablePlaceholder("[Click to write professional summary]", "professionalSummary", onNavigateToField)
-                    } else {
-                        Text(data.professionalSummary, fontSize = 10.sp, color = Color.DarkGray, lineHeight = 14.sp)
-                    }
-                    
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-                    if (data.workExperiences.isEmpty()) {
-                        ClickablePlaceholder("[Click to add work experiences]", "workExperiences", onNavigateToField)
-                    } else {
-                        data.workExperiences.forEach { job ->
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("${job.jobTitle} at ${job.companyName}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                            Text(job.dates + if (job.location.isNotBlank()) " | " + job.location else "", fontSize = 8.5.sp, color = Color.Gray)
-                            job.bullets.forEach { b ->
-                                Text("• $b", fontSize = 9.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.languages.isEmpty()) {
+                            ClickablePlaceholder("[+ Add languages]", "languages", onNavigateToField)
+                        } else {
+                            data.languages.forEach {
+                                Text("• ${it.language}: ${it.proficiency}", fontSize = 9.sp, color = Color.DarkGray)
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-                    if (data.educations.isEmpty()) {
-                        ClickablePlaceholder("[Add your academics]", "educations", onNavigateToField)
-                    } else {
-                        data.educations.forEach { edu ->
-                            Text("${edu.degree} - ${edu.institution} (${edu.year})", fontSize = 9.5.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
-                            if (edu.gpa.isNotBlank()) Text("GPA: " + edu.gpa, fontSize = 8.sp, color = Color.DarkGray)
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // RIGHT COLUMN: Main Experience
+                    Column(modifier = Modifier.weight(0.65f)) {
+                        // Header
+                        if (data.fullName.isBlank()) {
+                            ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
+                        } else {
+                            Text(data.fullName, style = MaterialTheme.typography.headlineSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        }
+                        if (data.jobTitle.isBlank()) {
+                            ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
+                        } else {
+                            Text(data.jobTitle, style = MaterialTheme.typography.titleMedium, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        if (data.professionalSummary.isBlank()) {
+                            ClickablePlaceholder("[Click to write professional summary]", "professionalSummary", onNavigateToField)
+                        } else {
+                            Text(data.professionalSummary, fontSize = 10.sp, color = Color.DarkGray, lineHeight = 14.sp)
+                        }
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.workExperiences.isEmpty()) {
+                            ClickablePlaceholder("[Click to add work experiences]", "workExperiences", onNavigateToField)
+                        } else {
+                            data.workExperiences.forEach { job ->
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("${job.jobTitle} at ${job.companyName}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                                Text(job.dates + if (job.location.isNotBlank()) " | " + job.location else "", fontSize = 8.5.sp, color = Color.Gray)
+                                job.bullets.forEach { b ->
+                                    Text("• $b", fontSize = 9.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.educations.isEmpty()) {
+                            ClickablePlaceholder("[Add your academics]", "educations", onNavigateToField)
+                        } else {
+                            data.educations.forEach { edu ->
+                                Text("${edu.degree} - ${edu.institution} (${edu.year})", fontSize = 9.5.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
+                                if (edu.gpa.isNotBlank()) Text("GPA: " + edu.gpa, fontSize = 8.sp, color = Color.DarkGray)
+                            }
                         }
                     }
                 }
             }
-        } else {
-            // SINGLE COLUMN LAYOUT
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                if (data.fullName.isBlank()) {
-                    ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
-                } else {
-                    Text(data.fullName, style = MaterialTheme.typography.headlineMedium, color = themeColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-                if (data.jobTitle.isBlank()) {
-                    ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
-                } else {
-                    Text(data.jobTitle, fontSize = 13.sp, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                }
-                Spacer(modifier = Modifier.height(6.dp))
+            "Right Sidebar Layout" -> {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // LEFT COLUMN: Main Experience
+                    Column(modifier = Modifier.weight(0.65f)) {
+                        // Header
+                        if (data.fullName.isBlank()) {
+                            ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
+                        } else {
+                            Text(data.fullName, style = MaterialTheme.typography.headlineSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        }
+                        if (data.jobTitle.isBlank()) {
+                            ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
+                        } else {
+                            Text(data.jobTitle, style = MaterialTheme.typography.titleMedium, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                // Contacts centered block
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    val elements = listOfNotNull(
-                        data.email.takeIf { it.isNotBlank() },
-                        data.phone.takeIf { it.isNotBlank() },
-                        data.location.takeIf { it.isNotBlank() },
-                        data.portfolioUrl.takeIf { it.isNotBlank() }
-                    )
-                    Text(
-                        text = if (elements.isEmpty()) "[No contact details added yet]" else elements.joinToString("  |  "),
-                        fontSize = 9.sp,
-                        color = Color.DarkGray,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = themeColor.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+                        Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        if (data.professionalSummary.isBlank()) {
+                            ClickablePlaceholder("[Click to write professional summary]", "professionalSummary", onNavigateToField)
+                        } else {
+                            Text(data.professionalSummary, fontSize = 10.sp, color = Color.DarkGray, lineHeight = 14.sp)
+                        }
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.workExperiences.isEmpty()) {
+                            ClickablePlaceholder("[Click to add work experiences]", "workExperiences", onNavigateToField)
+                        } else {
+                            data.workExperiences.forEach { job ->
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("${job.jobTitle} at ${job.companyName}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                                Text(job.dates + if (job.location.isNotBlank()) " | " + job.location else "", fontSize = 8.5.sp, color = Color.Gray)
+                                job.bullets.forEach { b ->
+                                    Text("• $b", fontSize = 9.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
+                                }
+                            }
+                        }
 
-            Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(3.dp))
-            if (data.professionalSummary.isBlank()) {
-                ClickablePlaceholder("[Click to write professional summary, suggest 3-4 sentences]", "professionalSummary", onNavigateToField)
-            } else {
-                Text(data.professionalSummary, fontSize = 10.sp, color = Color.DarkGray, lineHeight = 14.sp)
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-            HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
-            if (data.workExperiences.isEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                ClickablePlaceholder("[Click to add work experiences, add job title, dates and accomplishments]", "workExperiences", onNavigateToField)
-            } else {
-                data.workExperiences.forEach { job ->
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${job.jobTitle} at ${job.companyName}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Text(job.dates, fontSize = 9.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.educations.isEmpty()) {
+                            ClickablePlaceholder("[Add your academics]", "educations", onNavigateToField)
+                        } else {
+                            data.educations.forEach { edu ->
+                                Text("${edu.degree} - ${edu.institution} (${edu.year})", fontSize = 9.5.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
+                                if (edu.gpa.isNotBlank()) Text("GPA: " + edu.gpa, fontSize = 8.sp, color = Color.DarkGray)
+                            }
+                        }
                     }
-                    if (job.location.isNotBlank()) Text("Location: " + job.location, fontSize = 8.5.sp, color = Color.Gray)
-                    job.bullets.forEach { b ->
-                        Text("• $b", fontSize = 9.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // RIGHT SIDEBAR (Contacts, Skills)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.35f)
+                            .background(sidebarBg, RoundedCornerShape(4.dp))
+                            .padding(12.dp)
+                    ) {
+                        if (photoUri.isNotEmpty()) {
+                            RenderAttachedPhotoOnPreview(
+                                photoUri = photoUri,
+                                photoSize = photoSize,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 12.dp)
+                            )
+                        }
+                        Text("CONTACT INFO", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (data.email.isNotBlank()) Text(data.email, fontSize = 9.sp, color = Color.Black)
+                        if (data.phone.isNotBlank()) Text(data.phone, fontSize = 9.sp, color = Color.Black)
+                        if (data.location.isNotBlank()) Text(data.location, fontSize = 9.sp, color = Color.Black)
+                        if (data.portfolioUrl.isNotBlank()) Text(data.portfolioUrl, fontSize = 9.sp, color = Color(0xFF0D47A1))
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("TECHNICAL SKILLS", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.technicalSkills.isEmpty()) {
+                            ClickablePlaceholder("[+ Click here to add skills]", "technicalSkills", onNavigateToField)
+                        } else {
+                            data.technicalSkills.forEach {
+                                Text("• ${it.name} (${it.proficiency})", fontSize = 9.sp, color = Color.DarkGray)
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.languages.isEmpty()) {
+                            ClickablePlaceholder("[+ Add languages]", "languages", onNavigateToField)
+                        } else {
+                            data.languages.forEach {
+                                Text("• ${it.language}: ${it.proficiency}", fontSize = 9.sp, color = Color.DarkGray)
+                            }
+                        }
                     }
                 }
             }
+            "Three-Column Layout" -> {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // LEFT COLUMN (24%): Contact & Languages
+                    Column(modifier = Modifier.weight(0.24f).background(sidebarBg, RoundedCornerShape(4.dp)).padding(8.dp)) {
+                        if (photoUri.isNotEmpty()) {
+                            RenderAttachedPhotoOnPreview(
+                                photoUri = photoUri,
+                                photoSize = photoSize,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 8.dp)
+                            )
+                        }
+                        Text("CONTACT", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        if (data.email.isNotBlank()) Text(data.email, fontSize = 7.5.sp, color = Color.Black)
+                        if (data.phone.isNotBlank()) Text(data.phone, fontSize = 7.5.sp, color = Color.Black)
+                        if (data.location.isNotBlank()) Text(data.location, fontSize = 7.5.sp, color = Color.Black)
+                        
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("LANGUAGES", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+                        data.languages.forEach {
+                            Text("• ${it.language}", fontSize = 7.5.sp, color = Color.DarkGray)
+                        }
+                    }
 
-            Spacer(modifier = Modifier.height(14.dp))
-            Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
-            HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
-            if (data.educations.isEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                ClickablePlaceholder("[Click to add your academic degrees and institution details]", "educations", onNavigateToField)
-            } else {
-                data.educations.forEach { edu ->
+                    // CENTER COLUMN (52%): Info Header, Summary, Work History
+                    Column(modifier = Modifier.weight(0.52f)) {
+                        if (data.fullName.isBlank()) {
+                            ClickablePlaceholder("[Add Name]", "fullName", onNavigateToField)
+                        } else {
+                            Text(data.fullName, fontSize = 14.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        }
+                        if (data.jobTitle.isNotBlank()) {
+                            Text(data.jobTitle, fontSize = 10.sp, color = Color.DarkGray, fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text("SUMMARY", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        if (data.professionalSummary.isNotBlank()) {
+                            Text(data.professionalSummary, fontSize = 8.sp, color = Color.DarkGray, lineHeight = 11.sp)
+                        }
+                        
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("WORK EXPERIENCE", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        data.workExperiences.forEach { job ->
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("${job.jobTitle} at ${job.companyName}", fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
+                            Text(job.dates, fontSize = 7.5.sp, color = Color.Gray)
+                            job.bullets.forEach { b ->
+                                Text("• $b", fontSize = 7.5.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 4.dp))
+                            }
+                        }
+                    }
+
+                    // RIGHT COLUMN (24%): Technical Skills & Education
+                    Column(modifier = Modifier.weight(0.24f).background(sidebarBg, RoundedCornerShape(4.dp)).padding(8.dp)) {
+                        Text("TECH SKILLS", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        data.technicalSkills.forEach {
+                            Text("• ${it.name}", fontSize = 7.5.sp, color = Color.DarkGray)
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("EDUCATION", style = MaterialTheme.typography.labelSmall, color = themeColor, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+                        data.educations.forEach { edu ->
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(edu.degree, fontSize = 7.5.sp, fontWeight = FontWeight.SemiBold)
+                            Text(edu.institution, fontSize = 7.sp, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+            "Modern Split Layout" -> {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // LEFT COLUMN (50%)
+                    Column(modifier = Modifier.weight(0.5f)) {
+                        if (photoUri.isNotEmpty()) {
+                            RenderAttachedPhotoOnPreview(
+                                photoUri = photoUri,
+                                photoSize = photoSize,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        Text(data.fullName.ifBlank { "Full Name" }, style = MaterialTheme.typography.headlineSmall, color = themeColor, fontWeight = FontWeight.Bold)
+                        Text(data.jobTitle.ifBlank { "Professional Designation" }, fontSize = 11.sp, color = themeColor.copy(alpha = 0.8f))
+                        
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("CONTACT INFO", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.2f))
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(listOfNotNull(data.email, data.phone, data.location).filter { it.isNotBlank() }.joinToString("\n"), fontSize = 8.sp, color = Color.DarkGray)
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("PROFESSIONAL SUMMARY", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.2f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(data.professionalSummary.ifBlank { "Write professional summary here..." }, fontSize = 8.5.sp, color = Color.DarkGray, lineHeight = 12.sp)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("ACADEMICS", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.2f))
+                        data.educations.forEach { edu ->
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(edu.degree, fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
+                            Text("${edu.institution} (${edu.year})", fontSize = 7.5.sp, color = Color.Gray)
+                        }
+                    }
+
+                    // RIGHT COLUMN (50%)
+                    Column(modifier = Modifier.weight(0.5f)) {
+                        Text("WORK PRESENTATION", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.2f))
+                        if (data.workExperiences.isEmpty()) {
+                            ClickablePlaceholder("[Add work experience]", "workExperiences", onNavigateToField)
+                        } else {
+                            data.workExperiences.forEach { job ->
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(job.jobTitle, fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                                Text("${job.companyName} | ${job.dates}", fontSize = 7.5.sp, color = Color.Gray)
+                                job.bullets.forEach { b ->
+                                    Text("• $b", fontSize = 8.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 4.dp))
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("TECHNICAL ABILITIES", fontSize = 9.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.2f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        data.technicalSkills.forEach { skill ->
+                            Text("• ${skill.name} — ${skill.proficiency}", fontSize = 8.sp, color = Color.DarkGray)
+                        }
+                    }
+                }
+            }
+            else -> {
+                // SINGLE COLUMN LAYOUT
+                if (photoUri.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (data.fullName.isBlank()) {
+                                ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
+                            } else {
+                                Text(data.fullName, style = MaterialTheme.typography.headlineMedium, color = themeColor, fontWeight = FontWeight.Bold)
+                            }
+                            if (data.jobTitle.isBlank()) {
+                                ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
+                            } else {
+                                Text(data.jobTitle, fontSize = 13.sp, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold)
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                val elements = listOfNotNull(
+                                    data.email.takeIf { it.isNotBlank() },
+                                    data.phone.takeIf { it.isNotBlank() },
+                                    data.location.takeIf { it.isNotBlank() },
+                                    data.portfolioUrl.takeIf { it.isNotBlank() }
+                                )
+                                Text(
+                                    text = if (elements.isEmpty()) "[No contact details added yet]" else elements.joinToString("  |  "),
+                                    fontSize = 9.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
+                        }
+                        RenderAttachedPhotoOnPreview(
+                            photoUri = photoUri,
+                            photoSize = photoSize,
+                            modifier = Modifier.padding(start = 12.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = themeColor.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        if (data.fullName.isBlank()) {
+                            ClickablePlaceholder("[Click to add your full name]", "fullName", onNavigateToField)
+                        } else {
+                            Text(data.fullName, style = MaterialTheme.typography.headlineMedium, color = themeColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        }
+                        if (data.jobTitle.isBlank()) {
+                            ClickablePlaceholder("[Suggest job title]", "jobTitle", onNavigateToField)
+                        } else {
+                            Text(data.jobTitle, fontSize = 13.sp, color = Color(0xFF555555), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Contacts centered block
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            val elements = listOfNotNull(
+                                data.email.takeIf { it.isNotBlank() },
+                                data.phone.takeIf { it.isNotBlank() },
+                                data.location.takeIf { it.isNotBlank() },
+                                data.portfolioUrl.takeIf { it.isNotBlank() }
+                            )
+                            Text(
+                                text = if (elements.isEmpty()) "[No contact details added yet]" else elements.joinToString("  |  "),
+                                fontSize = 9.sp,
+                                color = Color.DarkGray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = themeColor.copy(alpha = 0.3f))
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                Text("PROFESSIONAL SUMMARY", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(3.dp))
+                if (data.professionalSummary.isBlank()) {
+                    ClickablePlaceholder("[Click to write professional summary, suggest 3-4 sentences]", "professionalSummary", onNavigateToField)
+                } else {
+                    Text(data.professionalSummary, fontSize = 10.sp, color = Color.DarkGray, lineHeight = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Text("WORK EXPERIENCE", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
+                if (data.workExperiences.isEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${edu.degree} - ${edu.institution}", fontSize = 10.sp, color = Color.Black, fontWeight = FontWeight.Bold)
-                        Text(edu.year, fontSize = 9.sp, color = Color.Gray)
+                    ClickablePlaceholder("[Click to add work experiences, add job title, dates and accomplishments]", "workExperiences", onNavigateToField)
+                } else {
+                    data.workExperiences.forEach { job ->
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("${job.jobTitle} at ${job.companyName}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(job.dates, fontSize = 9.sp, color = Color.Gray)
+                        }
+                        if (job.location.isNotBlank()) Text("Location: " + job.location, fontSize = 8.5.sp, color = Color.Gray)
+                        job.bullets.forEach { b ->
+                            Text("• $b", fontSize = 9.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
+                        }
                     }
-                    if (edu.gpa.isNotBlank()) Text("GPA: " + edu.gpa, fontSize = 8.5.sp, color = Color.DarkGray)
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Text("EDUCATION", fontSize = 11.sp, color = themeColor, fontWeight = FontWeight.Bold)
+                HorizontalDivider(color = themeColor.copy(alpha = 0.15f))
+                if (data.educations.isEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ClickablePlaceholder("[Click to add your academic degrees and institution details]", "educations", onNavigateToField)
+                } else {
+                    data.educations.forEach { edu ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("${edu.degree} - ${edu.institution}", fontSize = 10.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(edu.year, fontSize = 9.sp, color = Color.Gray)
+                        }
+                        if (edu.gpa.isNotBlank()) Text("GPA: " + edu.gpa, fontSize = 8.5.sp, color = Color.DarkGray)
+                    }
                 }
             }
         }
@@ -466,15 +773,31 @@ fun CvDocumentPreview(
 fun CoverLetterDocumentPreview(
     data: CoverLetterData,
     paperColor: Color = Color.White,
-    onNavigateToField: (String) -> Unit
+    onNavigateToField: (String) -> Unit,
+    photoUri: String = "",
+    photoSize: String = ""
 ) {
     val activeDate = data.date.ifBlank { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
 
     PaperCanvas(paperColor = paperColor) {
-        Text("COVER LETTER (Business standard format with zero sample data)", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(activeDate, fontSize = 10.sp, color = Color.Black)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("COVER LETTER (Business standard format with zero sample data)", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(activeDate, fontSize = 10.sp, color = Color.Black)
+            }
+            if (photoUri.isNotEmpty()) {
+                RenderAttachedPhotoOnPreview(
+                    photoUri = photoUri,
+                    photoSize = photoSize,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Recipient block

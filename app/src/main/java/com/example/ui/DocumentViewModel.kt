@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.*
+import org.json.JSONObject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -152,6 +153,19 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         prefs.edit().putString("watermark_symbol", value).apply()
     }
 
+    val attachedPhotoUri = MutableStateFlow(prefs.getString("attached_photo_uri", "") ?: "")
+    val attachedPhotoSize = MutableStateFlow(prefs.getString("attached_photo_size", "Passport") ?: "Passport")
+
+    fun setAttachedPhotoUri(value: String) {
+        attachedPhotoUri.value = value
+        prefs.edit().putString("attached_photo_uri", value).apply()
+    }
+
+    fun setAttachedPhotoSize(value: String) {
+        attachedPhotoSize.value = value
+        prefs.edit().putString("attached_photo_size", value).apply()
+    }
+
     fun setIsProStudioEnabled(value: Boolean) {
         isProStudioEnabled.value = value
         prefs.edit().putBoolean("is_pro_studio_enabled", value).apply()
@@ -280,14 +294,14 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
         repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "BUSINESS_LETTER")?.let { doc ->
             activeBusinessLetter.value = BusinessLetterData.fromJson(doc.contentJson)
         }
-        for (index in 11..46) {
+        for (index in 11..49) {
             repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "DYNAMIC_$index")?.let { doc ->
                 activeDynamicJsons.value = activeDynamicJsons.value.toMutableMap().apply {
                     put(index, doc.contentJson)
                 }
             }
         }
-        for (index in 11..46) {
+        for (index in 11..49) {
             repository.getDocumentByTypeAndName("ACTIVE_DRAFT", "CUSTOM_$index")?.let { doc ->
                 activeCustomDocs.value = activeCustomDocs.value.toMutableMap().apply {
                     put(index, CustomDocumentData.fromJson(doc.contentJson))
@@ -645,6 +659,184 @@ class DocumentViewModel(application: Application) : AndroidViewModel(application
     fun deleteTemplate(templateDocId: Long) {
         viewModelScope.launch {
             repository.deleteDocument(templateDocId)
+        }
+    }
+
+    fun autofillActiveDocumentFromProfile(selectedTab: Int) {
+        val p = userProfile.value
+        if (p.name.isEmpty() && p.companyName.isEmpty()) return // nothing to fill
+        
+        when (selectedTab) {
+            0 -> updateCv { curr ->
+                curr.copy(
+                    fullName = if (curr.fullName.isBlank()) p.name else curr.fullName,
+                    email = if (curr.email.isBlank()) p.email else curr.email,
+                    phone = if (curr.phone.isBlank()) p.phone else curr.phone,
+                    location = if (curr.location.isBlank()) p.address else curr.location
+                )
+            }
+            1 -> updateCoverLetter { curr ->
+                curr.copy(
+                    yourName = if (curr.yourName.isBlank()) p.name else curr.yourName,
+                    yourContact = if (curr.yourContact.isBlank()) "${p.address}\n${p.email} | ${p.phone}" else curr.yourContact
+                )
+            }
+            2 -> updateEmail { curr ->
+                curr.copy(
+                    signatureName = if (curr.signatureName.isBlank()) p.name else curr.signatureName,
+                    signatureTitle = if (curr.signatureTitle.isBlank()) p.companyName else curr.signatureTitle,
+                    signaturePhone = if (curr.signaturePhone.isBlank()) p.phone else curr.signaturePhone
+                )
+            }
+            3 -> updateInvoice { curr ->
+                curr.copy(
+                    myBusinessName = if (curr.myBusinessName.isBlank()) (if (p.companyName.isNotBlank()) p.companyName else p.name) else curr.myBusinessName,
+                    myAddress = if (curr.myAddress.isBlank()) p.address else curr.myAddress,
+                    myTaxId = if (curr.myTaxId.isBlank()) p.taxId else curr.myTaxId
+                )
+            }
+            4 -> updateProposal { curr ->
+                curr.copy(
+                    executiveSummary = if (curr.executiveSummary.isBlank()) "Presented by ${p.name}. We are pleased to provide strategic planning and solutions designed to accelerate growth." else curr.executiveSummary
+                )
+            }
+            5 -> updateOfferLetter { curr ->
+                curr.copy(
+                    companyName = if (curr.companyName.isBlank()) p.companyName else curr.companyName,
+                    signatoryName = if (curr.signatoryName.isBlank()) p.name else curr.signatoryName
+                )
+            }
+            6 -> updateResignationLetter { curr ->
+                curr.copy(
+                    employeeName = if (curr.employeeName.isBlank()) p.name else curr.employeeName
+                )
+            }
+            7 -> updateServiceContract { curr ->
+                curr.copy(
+                    contractorName = if (curr.contractorName.isBlank()) p.name else curr.contractorName
+                )
+            }
+            8 -> updateCertificate { curr ->
+                curr.copy(
+                    awardingOrg = if (curr.awardingOrg.isBlank()) p.companyName.ifBlank { p.name } else curr.awardingOrg,
+                    authoritySignatory = if (curr.authoritySignatory.isBlank()) p.name else curr.authoritySignatory
+                )
+            }
+            9 -> updateMeetingMinutes { curr ->
+                curr.copy(
+                    facilitator = if (curr.facilitator.isBlank()) p.name else curr.facilitator
+                )
+            }
+            10 -> updateBusinessLetter { curr ->
+                curr.copy(
+                    senderName = if (curr.senderName.isBlank()) p.name else curr.senderName,
+                    senderAddress = if (curr.senderAddress.isBlank()) p.address else curr.senderAddress
+                )
+            }
+            // For indices 11-22 & 47-49 which use dynamic JSON strings
+            in 11..22 -> {
+                val json = activeDynamicJsons.value[selectedTab] ?: ""
+                val fieldsMap = mutableMapOf<String, String>()
+                if (json.isNotEmpty()) {
+                    val obj = JSONObject(json)
+                    val fObj = obj.optJSONObject("fields") ?: JSONObject()
+                    fObj.keys().forEach { k -> fieldsMap[k] = fObj.getString(k) }
+                }
+                // Autofill fields if they are blank
+                val autofilledFields = mapOf(
+                    "senderName" to p.name,
+                    "sender" to p.name,
+                    "author" to p.name,
+                    "facilitator" to p.name,
+                    "facilitatorName" to p.name,
+                    "name" to p.name,
+                    "refereeName" to p.name,
+                    "testatorName" to p.name,
+                    "employeeName" to p.name,
+                    "borrower" to p.name,
+                    "buyer" to p.name,
+                    "seller" to (p.companyName.ifBlank { p.name }),
+                    "vendorName" to (p.companyName.ifBlank { p.name }),
+                    "myBusinessName" to (p.companyName.ifBlank { p.name }),
+                    "hostName" to (p.companyName.ifBlank { p.name }),
+                    "organizationName" to p.companyName,
+                    "initiatorName" to p.name,
+                    "senderContact" to "${p.address}\n${p.email} | ${p.phone}",
+                    "contactInfo" to "${p.email} | ${p.phone}"
+                )
+                fieldsMap.forEach { (key, existingValue) ->
+                    if (existingValue.isBlank() && autofilledFields.containsKey(key)) {
+                        fieldsMap[key] = autofilledFields[key] ?: ""
+                    }
+                }
+                
+                // Set it back
+                var baseData = getDefaultGenericDoc(selectedTab)
+                if (json.isNotEmpty()) {
+                    baseData = GenericDocumentData.fromJson(json)
+                }
+                val nextFields = baseData.fields.toMutableMap().apply {
+                    fieldsMap.forEach { (k, v) -> put(k, v) }
+                }
+                updateDynamicJson(selectedTab, baseData.copy(fields = nextFields).toJson())
+            }
+            in 47..49 -> {
+                val json = activeDynamicJsons.value[selectedTab] ?: ""
+                if (selectedTab == 47) {
+                    val curr = if (json.isEmpty()) MedicalCertificateData() else MedicalCertificateData.fromJson(json)
+                    val next = curr.copy(
+                        doctorName = if (curr.doctorName.isBlank()) p.name else curr.doctorName,
+                        clinicStampText = if (curr.clinicStampText.isBlank()) p.companyName else curr.clinicStampText
+                    )
+                    updateDynamicJson(47, next.toJson())
+                } else if (selectedTab == 48) {
+                    val curr = if (json.isEmpty()) ConsentFormData() else ConsentFormData.fromJson(json)
+                    val next = curr.copy(
+                        organizationName = if (curr.organizationName.isBlank()) p.companyName else curr.organizationName,
+                        participantName = if (curr.participantName.isBlank()) p.name else curr.participantName,
+                        signatureLine = if (curr.signatureLine.isBlank()) p.name else curr.signatureLine
+                    )
+                    updateDynamicJson(48, next.toJson())
+                } else if (selectedTab == 49) {
+                    val curr = if (json.isEmpty()) LetterOfIntentData() else LetterOfIntentData.fromJson(json)
+                    val next = curr.copy(
+                        sender = if (curr.sender.isBlank()) p.name else curr.sender,
+                        signature = if (curr.signature.isBlank()) p.name else curr.signature
+                    )
+                    updateDynamicJson(49, next.toJson())
+                }
+            }
+            // Dynamic form template maps (23..45)
+            in 23..45 -> {
+                val json = activeDynamicJsons.value[selectedTab] ?: ""
+                var currentData = if (json.isEmpty()) getDefaultGenericDoc(selectedTab) else GenericDocumentData.fromJson(json)
+                
+                val nextFields = currentData.fields.toMutableMap()
+                val keysToUpdate = listOf(
+                    "senderName", "sender", "author", "facilitator", "facilitatorName", "name", 
+                    "refereeName", "testatorName", "employeeName", "borrower", "buyer", "seller", 
+                    "vendorName", "myBusinessName", "hostName", "organizationName", "initiatorName",
+                    "senderContact", "contactInfo"
+                )
+                keysToUpdate.forEach { key ->
+                    if (nextFields[key]?.isBlank() != false) {
+                        val filled = when (key) {
+                            "senderName", "sender", "author", "facilitator", "facilitatorName", "name", 
+                            "refereeName", "testatorName", "employeeName", "borrower", "buyer", "initiatorName" -> p.name
+                            
+                            "seller", "vendorName", "myBusinessName", "hostName", "organizationName" -> p.companyName.ifBlank { p.name }
+                            
+                            "senderContact" -> "${p.address}\n${p.email} | ${p.phone}"
+                            "contactInfo" -> "${p.email} | ${p.phone}"
+                            else -> ""
+                        }
+                        if (filled.isNotBlank()) {
+                            nextFields[key] = filled
+                        }
+                    }
+                }
+                updateDynamicJson(selectedTab, currentData.copy(fields = nextFields).toJson())
+            }
         }
     }
 }

@@ -346,3 +346,122 @@ data class GenericDocumentData(
         }
     }
 }
+
+data class MedicalCertificateData(
+    val patientName: String = "",
+    val date: String = "",
+    val diagnosis: String = "",
+    val recommendedTimeOffFrom: String = "",
+    val recommendedTimeOffTo: String = "",
+    val doctorName: String = "",
+    val clinicStampText: String = "REGISTERED CLINIC STAMP"
+) {
+    fun toJson(): String = JSONObject().apply {
+        put("patientName", patientName)
+        put("date", date)
+        put("diagnosis", diagnosis)
+        put("recommendedTimeOffFrom", recommendedTimeOffFrom)
+        put("recommendedTimeOffTo", recommendedTimeOffTo)
+        put("doctorName", doctorName)
+        put("clinicStampText", clinicStampText)
+    }.toString()
+
+    companion object {
+        fun fromJson(jsonStr: String): MedicalCertificateData {
+            if (jsonStr.isEmpty()) return MedicalCertificateData()
+            val js = JSONObject(jsonStr)
+            return MedicalCertificateData(
+                patientName = js.optString("patientName", ""),
+                date = js.optString("date", ""),
+                diagnosis = js.optString("diagnosis", ""),
+                recommendedTimeOffFrom = js.optString("recommendedTimeOffFrom", ""),
+                recommendedTimeOffTo = js.optString("recommendedTimeOffTo", ""),
+                doctorName = js.optString("doctorName", ""),
+                clinicStampText = js.optString("clinicStampText", "REGISTERED CLINIC STAMP")
+            )
+        }
+    }
+}
+
+data class ConsentFormData(
+    val organizationName: String = "",
+    val participantName: String = "",
+    val activityEvent: String = "",
+    val risksAcknowledged: List<String> = emptyList(),
+    val consentStatement: String = "",
+    val signatureLine: String = "",
+    val date: String = ""
+) {
+    fun toJson(): String = JSONObject().apply {
+        put("organizationName", organizationName)
+        put("participantName", participantName)
+        put("activityEvent", activityEvent)
+        put("risksAcknowledged", JSONArray(risksAcknowledged))
+        put("consentStatement", consentStatement)
+        put("signatureLine", signatureLine)
+        put("date", date)
+    }.toString()
+
+    companion object {
+        fun fromJson(jsonStr: String): ConsentFormData {
+            if (jsonStr.isEmpty()) return ConsentFormData()
+            val js = JSONObject(jsonStr)
+            val risks = mutableListOf<String>()
+            val arr = js.optJSONArray("risksAcknowledged")
+            if (arr != null) {
+                for (i in 0 until arr.length()) risks.add(arr.optString(i, ""))
+            }
+            return ConsentFormData(
+                organizationName = js.optString("organizationName", ""),
+                participantName = js.optString("participantName", ""),
+                activityEvent = js.optString("activityEvent", ""),
+                risksAcknowledged = risks,
+                consentStatement = js.optString("consentStatement", ""),
+                signatureLine = js.optString("signatureLine", ""),
+                date = js.optString("date", "")
+            )
+        }
+    }
+}
+
+data class LetterOfIntentData(
+    val recipient: String = "",
+    val sender: String = "",
+    val programPosition: String = "",
+    val whyInterested: String = "",
+    val whyGoodFitBullets: List<String> = emptyList(),
+    val closing: String = "",
+    val signature: String = ""
+) {
+    fun toJson(): String = JSONObject().apply {
+        put("recipient", recipient)
+        put("sender", sender)
+        put("programPosition", programPosition)
+        put("whyInterested", whyInterested)
+        put("whyGoodFitBullets", JSONArray(whyGoodFitBullets))
+        put("closing", closing)
+        put("signature", signature)
+    }.toString()
+
+    companion object {
+        fun fromJson(jsonStr: String): LetterOfIntentData {
+            if (jsonStr.isEmpty()) return LetterOfIntentData()
+            val js = JSONObject(jsonStr)
+            val bullets = mutableListOf<String>()
+            val arr = js.optJSONArray("whyGoodFitBullets")
+            if (arr != null) {
+                for (i in 0 until arr.length()) bullets.add(arr.optString(i, ""))
+            }
+            return LetterOfIntentData(
+                recipient = js.optString("recipient", ""),
+                sender = js.optString("sender", ""),
+                programPosition = js.optString("programPosition", ""),
+                whyInterested = js.optString("whyInterested", ""),
+                whyGoodFitBullets = bullets,
+                closing = js.optString("closing", ""),
+                signature = js.optString("signature", "")
+              )
+          }
+      }
+}
+
